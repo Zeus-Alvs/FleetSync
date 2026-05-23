@@ -1,0 +1,41 @@
+### Build do Maven ###
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+### Arquivos Compilados do Java ###
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+### Logs ###
+*.log
+
+### Configurações de IDEs (VS Code, Eclipse, IntelliJ) ###
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.springBeans
+.project
+.classpath
+.settings/
+.factorypath
+
+### Arquivos do Sistema Operacional ###
+.DS_Store
+Thumbs.db
+
+### Variáveis de Ambiente e Segredos ###
+.env
