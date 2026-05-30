@@ -10,7 +10,7 @@ import Features from './components/Features';
 import Team from './components/Team';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
-import LoginModal from './components/modals/LoginModal';
+import LoginModal from './components/LoginModal';
 import Cadastro from './Cadastro'; 
 
 // O seu componente de Dashboard
