@@ -50,6 +50,7 @@ export default function Team() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div>
             <h2 className="text-3xl md:text-4xl font-black tracking-tight">Nossa <span className="text-amber-500">Equipe</span></h2>
+            <br/>
             <p className="text-zinc-400 text-sm mt-2">Os desenvolvedores por trás da inteligência logística do FleetSync.</p>
           </div>
           {/* Setas Laterais de Navegação */}

@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --text: #6b6375;
@@ -55,6 +58,12 @@ body {
   padding: 0;
 }
 
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 #root {
   /* Liberado para ocupar 100% da tela e permitir que o Tailwind controle os alinhamentos */
   min-height: 100vh;
@@ -70,7 +79,7 @@ h1, h2, p {
 
 h1, h2 {
   font-family: var(--heading);
-  font-weight: 500;
+  font-weight: 400;
   color: var(--text-h);
 }
 

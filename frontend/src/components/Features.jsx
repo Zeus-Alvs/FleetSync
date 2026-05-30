@@ -16,6 +16,7 @@ export default function Features() {
         <h2 className="text-3xl md:text-4xl font-black tracking-tight">
           Funcionalidades <span className="text-amber-500">Principais</span>
         </h2>
+        <br/>
         <p className="text-zinc-400">Recursos modulares projetados para entregar o controle absoluto da operação logística na ponta dos seus dedos.</p>
       </div>
 

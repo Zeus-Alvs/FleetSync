@@ -1,37 +1,106 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginModal({ isOpen, onClose }) {
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(false);
+
+  const navigate = useNavigate();
+
   if (!isOpen) return null;
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setErro('');
+    setCarregando(false);
+
+    if (!email || !senha) {
+      setErro('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    try {
+      setCarregando(true);
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, senha }),
+      });
+
+      if (!response.ok) {
+        const mensagemErro = await response.text();
+        throw new Error(mensagemErro || 'Credenciais inválidas.');
+      }
+
+      const usuarioLogado = await response.json();
+
+      localStorage.setItem('usuario', JSON.stringify(usuarioLogado));
+
+      onClose();
+      navigate('/dashboard');
+
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-      <div className="bg-zinc-950 border border-white/10 rounded-xl p-8 w-full max-w-md relative animate-fade-in text-white">
-        <button 
+      <div className="bg-zinc-950 border border-white/10 rounded-xl p-8 w-full max-w-md relative text-white">
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 text-zinc-400 hover:text-white text-xl"
         >
           &times;
         </button>
-        
+
         <h3 className="text-2xl font-bold text-white mb-2">Acesse o <span className="text-amber-500">FleetSync</span></h3>
         <p className="text-sm text-zinc-400 mb-6">Insira suas credenciais para acessar o painel operacional.</p>
-        
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+
+        {erro && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded mb-4">
+            {erro}
+          </div>
+        )}
+
+        <form className="space-y-4" onSubmit={handleLogin}>
           <div>
-            <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">E-mail ou Usuário</label>
-            <input type="email" className="w-full bg-zinc-900 border border-white/10 rounded p-3 text-white focus:outline-none focus:border-amber-500" placeholder="exemplo@email.com" />
+            <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">E-mail</label>
+            <input
+              type="email"
+              className="w-full bg-zinc-900 border border-white/10 rounded p-3 text-white focus:outline-none focus:border-amber-500"
+              placeholder="exemplo@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div>
             <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">Senha</label>
-            <input type="password" className="w-full bg-zinc-900 border border-white/10 rounded p-3 text-white focus:outline-none focus:border-amber-500" placeholder="••••••••" />
+            <input
+              type="password"
+              className="w-full bg-zinc-900 border border-white/10 rounded p-3 text-white focus:outline-none focus:border-amber-500"
+              placeholder="••••••••"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+            />
           </div>
-          
+
           <div className="text-right">
             <a href="#recuperar" className="text-xs text-amber-500 hover:underline">Esqueceu a senha?</a>
           </div>
 
-          <button type="submit" className="w-full bg-amber-500 text-black font-bold py-3 rounded hover:bg-amber-400 transition-colors mt-2">
-            Entrar no Sistema
+          <button
+            type="submit"
+            disabled={carregando}
+            className="w-full bg-amber-500 text-black font-bold py-3 rounded hover:bg-amber-400 transition-colors mt-2 disabled:opacity-50"
+          >
+            {carregando ? 'Autenticando...' : 'Entrar no Sistema'}
           </button>
         </form>
       </div>

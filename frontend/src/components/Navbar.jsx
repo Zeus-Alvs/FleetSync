@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
-export default function Navbar({ onLoginClick, onNavigate, currentScreen }) {
+export default function Navbar({ onLoginClick }) {
   const [activeSection, setActiveSection] = useState('inicio');
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
 
   // Monitora o scroll da página apenas se estivermos na Home
   useEffect(() => {
-    if (currentScreen !== 'home') return;
+    if (!isHomePage) return;
 
-    const sections = ['inicio', 'sobre', 'features', 'equipe', 'contato'];
+    const sections = ['inicio', 'features', 'equipe', 'contato'];
     const observerOptions = {
       root: null,
       rootMargin: '-50% 0px -50% 0px',
@@ -29,59 +32,55 @@ export default function Navbar({ onLoginClick, onNavigate, currentScreen }) {
     });
 
     return () => observer.disconnect();
-  }, [currentScreen]);
+  }, [isHomePage]);
 
   const linkClass = (id) => {
     const baseClass = "transition-colors relative py-1 cursor-pointer";
     const activeClass = "text-amber-500 font-bold";
     const inactiveClass = "text-zinc-300 hover:text-amber-500";
-    return `${baseClass} ${activeSection === id && currentScreen === 'home' ? activeClass : inactiveClass}`;
+    return `${baseClass} ${activeSection === id && isHomePage ? activeClass : inactiveClass}`;
   };
 
   return (
     <nav className="fixed top-0 left-0 w-full bg-zinc-950/95 backdrop-blur-md border-b border-white/10 z-50 px-6 py-4 flex justify-between items-center text-white">
-      
-      {/* Logo - Agora clica para voltar para a Home de forma responsiva */}
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('home')}>
+
+      {/* Logo - Clica e vai para a Home Real */}
+      <Link to="/" className="flex items-center gap-2 cursor-pointer">
         <span className="text-amber-500 font-black text-2xl tracking-wider">FLEETSYNC</span>
-      </div>
-      
-      {/* Links de Navegação */}
+      </Link>
+
+      {/* Links de Navegação (Scroll Smooth funcionando com as tags a) */}
       <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-        <a href="#inicio" onClick={() => onNavigate('home')} className={linkClass('inicio')}>
-          Início
-          {activeSection === 'inicio' && currentScreen === 'home' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-500 rounded-full" />}
-        </a>
-        <a href="#features" onClick={() => onNavigate('home')} className={linkClass('features')}>
-          Funcionalidades
-          {activeSection === 'features' && currentScreen === 'home' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-500 rounded-full" />}
-        </a>
-        <a href="#equipe" onClick={() => onNavigate('home')} className={linkClass('equipe')}>
-          Equipe
-          {activeSection === 'equipe' && currentScreen === 'home' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-500 rounded-full" />}
-        </a>
-        <a href="#contato" onClick={() => onNavigate('home')} className={linkClass('contato')}>
-          Contato
-          {activeSection === 'contato' && currentScreen === 'home' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-500 rounded-full" />}
-        </a>
+        {isHomePage ? (
+          <>
+            <a href="#inicio" className={linkClass('inicio')}>Início</a>
+            <a href="#features" className={linkClass('features')}>Funcionalidades</a>
+            <a href="#equipe" className={linkClass('equipe')}>Equipe</a>
+            <a href="#contato" className={linkClass('contato')}>Contato</a>
+          </>
+        ) : (
+          <>
+            <Link to="/" className="text-zinc-300 hover:text-amber-500">Voltar para Home</Link>
+          </>
+        )}
       </div>
 
       {/* Botões de Ação */}
       <div className="flex items-center gap-4">
-        <button 
+        <button
           onClick={onLoginClick}
           className="text-sm font-semibold hover:text-amber-500 transition-colors"
         >
           Entrar
         </button>
-        
-        {/* O SEU BOTÃO CADASTRAR - Agora configurado com a rota */}
-        <button 
-          onClick={() => onNavigate('cadastro')}
+
+        {/* BOTÃO CADASTRAR ARRUMADO COM LINK ROUTER */}
+        <Link
+          to="/cadastro"
           className="bg-amber-500 text-black text-sm font-bold px-4 py-2 rounded shadow-md hover:bg-amber-400 transition-all transform hover:-translate-y-0.5"
         >
           Cadastrar
-        </button>
+        </Link>
       </div>
     </nav>
   );

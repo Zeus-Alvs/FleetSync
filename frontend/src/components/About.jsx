@@ -8,6 +8,7 @@ export default function About() {
           <h2 className="text-3xl md:text-4xl font-black tracking-tight">
             Sobre o <span className="text-amber-500">Projeto</span>
           </h2>
+          <br/>
           <p className="text-zinc-400 text-lg">
             O FleetSync nasceu com o propósito de revolucionar a coordenação de transporte de cargas, eliminando a ociosidade da frota e reduzindo drasticamente o tempo de espera através de tecnologia de ponta.
           </p>
