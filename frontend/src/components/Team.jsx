@@ -4,11 +4,36 @@ export default function Team() {
   const scrollRef = useRef(null);
 
   const members = [
-    { name: "Brenno D'Luca", role: "Backend Developer", desc: "Responsável pela lógica." },
-    { name: "Eduarda Belles", role: "Frontend Dev / UX Designer", desc: "Desenvolveu os componentes interativos do ecossistema React." },
-    { name: "Ellen Gouveia", role: "Frontend Developer", desc: "Responsável pelo desenvolvimento frontend do sistema." },
-    { name: "Luana Fontenelle", role: "Frontend Developer", desc: "Estruturou e desenvolveu as telas do frontend do sistema." },
-    { name: "Zeus Machado", role: "Full Stack Developer", desc: "Responsável pelo backend e frontend do sistema." },
+    { 
+      name: "Brenno D'Luca", 
+      role: "Backend Developer", 
+      desc: "Responsável pela lógica.",
+      image: "/members/brenno.jpeg"
+    },
+    { 
+      name: "Eduarda Belles", 
+      role: "Frontend Dev / UX Designer", 
+      desc: "Desenvolveu os componentes interativos do ecossistema React.",
+      image: "/members/eduarda.jpeg"
+    },
+    { 
+      name: "Ellen Gouveia", 
+      role: "Frontend Developer", 
+      desc: "Responsável pelo desenvolvimento frontend do sistema.",
+      image: "/members/ellen.jpeg"
+    },
+    { 
+      name: "Luana Fontenelle", 
+      role: "Frontend Developer", 
+      desc: "Estruturou e desenvolveu as telas do frontend do sistema.",
+      image: "/members/luana.jpeg"
+    },
+    { 
+      name: "Zeus Machado", 
+      role: "Full Stack Developer", 
+      desc: "Responsável pelo backend e frontend do sistema.",
+      image: "/members/zeus.jpeg"
+    },
   ];
 
   const scroll = (direction) => {
@@ -50,10 +75,24 @@ export default function Team() {
               className="min-w-[280px] md:min-w-[340px] bg-zinc-900 border border-white/5 rounded-xl p-6 snap-start flex flex-col justify-between"
             >
               <div>
-                {/* Placeholder para Foto do Integrante */}
-                <div className="w-16 h-16 rounded-full bg-zinc-950 border border-amber-500/30 flex items-center justify-center text-amber-500 font-bold mb-4 text-xl">
-                  {member.name.charAt(0)}{index + 1}
+                {/* Imagem do Integrante com Círculo Perfeito */}
+                <div className="w-16 h-16 rounded-full overflow-hidden border border-amber-500/30 bg-zinc-950 flex items-center justify-center text-amber-500 font-bold mb-4 text-xl">
+                  {member.image ? (
+                    <img 
+                      src={member.image} 
+                      alt={member.name} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => { 
+                        // Fallback caso a imagem dê erro ou não seja encontrada
+                        e.target.style.display = 'none';
+                        e.target.parentNode.innerHTML = `<span>${member.name.charAt(0)}</span>`;
+                      }}
+                    />
+                  ) : (
+                    <span>{member.name.charAt(0)}</span>
+                  )}
                 </div>
+                
                 <h3 className="text-xl font-bold text-white">{member.name}</h3>
                 <p className="text-xs font-mono text-amber-500 uppercase tracking-wider mb-4">{member.role}</p>
                 <p className="text-sm text-zinc-400 leading-relaxed">{member.desc}</p>

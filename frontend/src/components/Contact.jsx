@@ -31,23 +31,20 @@ export default function Contact() {
 
         <div className="space-y-4">
           <div className="flex items-start gap-4">
-            <span className="text-amber-500 font-bold mt-1">📞</span>
             <div>
-              <p className="font-semibold text-white">Telefone de Contato</p>
+              <p className="font-semibold text-white"> 📞 Telefone de Contato</p>
               <p className="text-sm text-zinc-400">0800 555 SYNC (7962)</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <span className="text-amber-500 font-bold mt-1">📍</span>
             <div>
-              <p className="font-semibold text-white">Localização</p>
+              <p className="font-semibold text-white"> 📍 Localização</p>
               <p className="text-sm text-zinc-400">FATEC - Complexo Tecnológico de Logística</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <span className="text-amber-500 font-bold mt-1">🕒</span>
             <div>
-              <p className="font-semibold text-white">Horário de Atendimento</p>
+              <p className="font-semibold text-white"> 🕒Horário de Atendimento</p>
               <p className="text-sm text-zinc-400">Segunda a Sexta, das 08h às 22h</p>
             </div>
           </div>
