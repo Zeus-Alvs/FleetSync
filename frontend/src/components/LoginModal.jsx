@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+// Importando nossos novos utilitários de segurança e API
+import { AuthContext } from '../contexts/AuthContext';
+import api from '../services/api';
 
 export default function LoginModal({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
@@ -8,13 +12,14 @@ export default function LoginModal({ isOpen, onClose }) {
   const [carregando, setCarregando] = useState(false);
 
   const navigate = useNavigate();
+  // Puxando a função 'login' do nosso cofre global
+  const { login } = useContext(AuthContext);
 
   if (!isOpen) return null;
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setErro('');
-    setCarregando(false);
 
     if (!email || !senha) {
       setErro('Por favor, preencha todos os campos.');
@@ -23,28 +28,27 @@ export default function LoginModal({ isOpen, onClose }) {
 
     try {
       setCarregando(true);
-      const response = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, senha }),
-      });
 
-      if (!response.ok) {
-        const mensagemErro = await response.text();
-        throw new Error(mensagemErro || 'Credenciais inválidas.');
-      }
+      // 1. Usando o Axios para fazer a chamada (já aponta para localhost:8080/api)
+      const response = await api.post('/api/auth/login', { email, senha });
 
-      const usuarioLogado = await response.json();
+      // 2. Pegamos os dados do usuário que o Java devolveu
+      const usuarioLogado = response.data;
 
-      localStorage.setItem('usuario', JSON.stringify(usuarioLogado));
+      // 3. Workaround: Como o Java ainda não gera JWT, improvisamos um token 
+      // temporário. Quando o backend for atualizado, basta ele mandar um 'token' no JSON.
+      const token = usuarioLogado.token || 'token-temporario-jwt-em-desenvolvimento';
+
+      // 4. Salva a sessão no Cofre Global (que por sua vez destranca a ProtectedRoute)
+      login(token, usuarioLogado);
 
       onClose();
       navigate('/dashboard');
 
     } catch (err) {
-      setErro(err.message);
+      // O Axios guarda a mensagem de erro do backend dentro de err.response.data
+      const mensagem = err.response?.data || 'Credenciais inválidas ou servidor offline.';
+      setErro(typeof mensagem === 'string' ? mensagem : 'Erro ao tentar autenticar.');
     } finally {
       setCarregando(false);
     }

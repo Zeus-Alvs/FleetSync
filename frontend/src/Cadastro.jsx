@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
+// Importamos nossa API centralizada
+import api from './services/api';
 
 export default function Register() {
   const [userType, setUserType] = useState('driver');
   const [showPassword, setShowPassword] = useState(false);
+
+  // States para capturar os campos obrigatórios do Backend
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // States de feedback da tela
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
   const passwordRules = {
     length: password.length >= 8,
@@ -12,15 +22,46 @@ export default function Register() {
     special: /[!@#$%^&*(),.?":{}|<> ]/.test(password),
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    setErro('');
+
+    // Validação básica do lado do cliente
+    if (!passwordRules.length || !passwordRules.number) {
+      setErro("A senha não atende aos requisitos mínimos de segurança.");
+      return;
+    }
+
+    try {
+      setCarregando(true);
+
+      // Enviamos o POST para o nosso Backend Java
+      // A role será definida como OPERADOR como padrão por enquanto
+      const payload = {
+        nome: nome,
+        email: email,
+        senha: password,
+        perfil: "OPERADOR"
+      };
+
+      await api.post('/api/auth/cadastro', payload);
+
+      // Se a API retornar sucesso, mostramos a tela verde!
+      setIsSubmitted(true);
+
+    } catch (err) {
+      // Pega a mensagem de erro que o Java mandar (ex: "Email já cadastrado")
+      const mensagem = err.response?.data || "Ocorreu um erro ao tentar cadastrar o usuário no servidor.";
+      setErro(typeof mensagem === 'string' ? mensagem : "Erro interno no servidor.");
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-800 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full bg-white border border-zinc-200/60 rounded-2xl p-8 shadow-xl shadow-zinc-200/50">
-        
+
         {isSubmitted ? (
           <div className="text-center py-12 space-y-6 animate-fadeIn">
             <div className="w-16 h-16 bg-amber-500 text-black rounded-full flex items-center justify-center text-3xl font-bold mx-auto shadow-md">
@@ -50,49 +91,73 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => setUserType('driver')}
-                className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${
-                  userType === 'driver' 
-                    ? 'bg-black text-white shadow-md' 
-                    : 'text-zinc-500 hover:text-zinc-900'
-                }`}
+                className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${userType === 'driver'
+                  ? 'bg-black text-white shadow-md'
+                  : 'text-zinc-500 hover:text-zinc-900'
+                  }`}
               >
                 🚚 Sou Motorista / Entregador
               </button>
               <button
                 type="button"
                 onClick={() => setUserType('company')}
-                className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${
-                  userType === 'company' 
-                    ? 'bg-black text-white shadow-md' 
-                    : 'text-zinc-500 hover:text-zinc-900'
-                }`}
+                className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${userType === 'company'
+                  ? 'bg-black text-white shadow-md'
+                  : 'text-zinc-500 hover:text-zinc-900'
+                  }`}
               >
                 🏢 Sou Empresa Cliente
               </button>
             </div>
 
+            {/* Exibe erro da API se houver */}
+            {erro && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span className="block sm:inline">{erro}</span>
+              </div>
+            )}
+
             {/* Formulário Único */}
             <form className="space-y-6" onSubmit={handleSubmit}>
-              
+
               {/* Dados de Acesso */}
               <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200 space-y-4">
                 <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Dados de Acesso</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                    <label className="text-xs font-semibold text-zinc-500">Nome Completo</label>
+                    <input
+                      type="text"
+                      required
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Ex: Zeus Alves"
+                      className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all"
+                    />
+                  </div>
+
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-zinc-500">E-mail corporativo/pessoal</label>
-                    <input type="email" required placeholder="exemplo@email.com" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="exemplo@email.com"
+                      className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all"
+                    />
                   </div>
-                  
+
                   <div className="flex flex-col gap-1.5 relative">
                     <label className="text-xs font-semibold text-zinc-500">Senha</label>
                     <div className="relative">
-                      <input 
-                        type={showPassword ? "text" : "password"} 
+                      <input
+                        type={showPassword ? "text" : "password"}
                         value={password}
                         required
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••" 
-                        className="w-full bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all pr-16" 
+                        placeholder="••••••••"
+                        className="w-full bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all pr-16"
                       />
                       <button
                         type="button"
@@ -121,39 +186,16 @@ export default function Register() {
 
               {/* Formulário do Motorista */}
               {userType === 'driver' && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Dados Pessoais</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input type="text" placeholder="Nome Completo" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="text" placeholder="CPF" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="date" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-600 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="text" placeholder="Telefone" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                    </div>
+                <div className="space-y-6 animate-fadeIn opacity-50 cursor-not-allowed">
+                  <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 mb-4" role="alert">
+                    <p className="font-bold">Aviso</p>
+                    <p>O cadastro de dados adicionais do motorista ainda não está integrado à API. Preencha apenas os Dados de Acesso acima por enquanto.</p>
                   </div>
-
                   <div className="space-y-4">
-                    <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Documentação</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <input type="text" placeholder="Número da CNH" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="text" placeholder="Categoria (Ex: C, D, E)" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="date" placeholder="Validade" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-600 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Informações Operacionais</h3>
+                    <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Dados Pessoais (Desativado temporariamente)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <select className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-600 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all">
-                        <option value="">Tipo de Veículo</option>
-                        <option value="fiorino">Fiorino / Van</option>
-                        <option value="toco">Caminhão Toco</option>
-                        <option value="truck">Caminhão Truck</option>
-                        <option value="carreta">Carreta</option>
-                      </select>
-                      <input type="text" placeholder="Placa do Veículo" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="text" placeholder="Capacidade de Carga (kg)" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="text" placeholder="Região de Atuação (Ex: SP - Baixada Santista)" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
+                      <input type="text" disabled placeholder="CPF" className="bg-gray-100 border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800" />
+                      <input type="text" disabled placeholder="Telefone" className="bg-gray-100 border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800" />
                     </div>
                   </div>
                 </div>
@@ -161,65 +203,28 @@ export default function Register() {
 
               {/* Formulário da Empresa */}
               {userType === 'company' && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Dados Corporativos</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input type="text" placeholder="Razão Social" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="text" placeholder="Nome Fantasia" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="text" placeholder="CNPJ" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="text" placeholder="Inscrição Estadual (Opcional)" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                    </div>
+                <div className="space-y-6 animate-fadeIn opacity-50 cursor-not-allowed">
+                  <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 mb-4" role="alert">
+                    <p className="font-bold">Aviso</p>
+                    <p>O cadastro de dados empresariais ainda não está integrado à API. Preencha apenas os Dados de Acesso acima por enquanto.</p>
                   </div>
-
                   <div className="space-y-4">
-                    <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Contato Responsável</h3>
+                    <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Dados Corporativos (Desativado temporariamente)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input type="text" placeholder="Nome do Responsável Operacional" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                      <input type="text" placeholder="Telefone Comercial / WhatsApp" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Necessidades Logísticas</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <select className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-600 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all">
-                        <option value="">Frequência de Envios</option>
-                        <option value="diario">Diário</option>
-                        <option value="semanal">Semanal</option>
-                        <option value="esporadico">Esporádico / Sazonal</option>
-                      </select>
-                      <select className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-600 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all">
-                        <option value="">Ramo de Atuação principal</option>
-                        <option value="ecommerce">E-commerce / Varejo</option>
-                        <option value="industria">Indústria / Manufatura</option>
-                        <option value="alimentos">Alimentos & Perecíveis</option>
-                        <option value="outros">Outros</option>
-                      </select>
+                      <input type="text" disabled placeholder="Razão Social" className="bg-gray-100 border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800" />
+                      <input type="text" disabled placeholder="CNPJ" className="bg-gray-100 border border-zinc-300 rounded-lg px-4 py-2.5 text-sm text-zinc-800" />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Endereço Compartilhado */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-mono text-zinc-900 uppercase tracking-wider font-bold border-b border-amber-500 pb-1 inline-block">Endereço</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <input type="text" placeholder="CEP" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm col-span-2 md:col-span-1 text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                  <input type="text" placeholder="Rua" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm col-span-2 md:col-span-2 text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                  <input type="text" placeholder="Nº" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm col-span-2 md:col-span-1 text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                  <input type="text" placeholder="Bairro" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm col-span-2 text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                  <input type="text" placeholder="Cidade" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm col-span-1 text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                  <input type="text" placeholder="UF" className="bg-white border border-zinc-300 rounded-lg px-4 py-2.5 text-sm col-span-1 text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-amber-500/20 transition-all" />
-                </div>
-              </div>
-
               {/* Botão de Envio */}
-              <button 
-                type="submit" 
-                className="w-full bg-amber-500 text-black font-black py-3.5 px-4 rounded-xl shadow-md hover:bg-black hover:text-white transition-all transform hover:-translate-y-0.5 text-center mt-4 tracking-wide uppercase text-sm"
+              <button
+                type="submit"
+                disabled={carregando}
+                className="w-full bg-amber-500 text-black font-black py-3.5 px-4 rounded-xl shadow-md hover:bg-black hover:text-white transition-all transform hover:-translate-y-0.5 text-center mt-4 tracking-wide uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Finalizar Cadastro do {userType === 'driver' ? 'Motorista' : 'Cliente'}
+                {carregando ? 'Processando Cadastro...' : `Finalizar Cadastro do ${userType === 'driver' ? 'Motorista' : 'Cliente'}`}
               </button>
             </form>
           </>
