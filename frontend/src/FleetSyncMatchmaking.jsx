@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   MapPin, X, AlertTriangle, ChevronRight, Zap, RefreshCw, Star,
-  ThumbsUp, SlidersHorizontal, Truck, Search, Bell, User, Edit2, Trash2
-} from 'lucide-react';
-
-// Importa o nosso cliente Axios
+  ThumbsUp, SlidersHorizontal, Truck, Search, Bell, User, Edit2, Trash2, CheckCircle2
+} from 'lucide-react';
 import api from './services/api';
-
 function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile }) {
   return (
     <nav className="fixed top-0 left-0 right-0 h-16 bg-zinc-950 border-b border-zinc-800 px-6 flex items-center justify-between z-40 shadow-lg">
@@ -23,7 +20,6 @@ function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile 
           </span>
         </div>
       </div>
-
       <div className="hidden md:flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-1.5 w-96 gap-2 focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-400/30 transition-all">
         <Search className="w-4 h-4 text-zinc-500" />
         <input
@@ -34,15 +30,12 @@ function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile 
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-
       <div className="flex items-center gap-4">
         <button onClick={onOpenNotifications} className="relative p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-400 rounded-full ring-2 ring-zinc-950"></span>
         </button>
-
         <div className="h-6 w-[1px] bg-zinc-800"></div>
-
         <button onClick={onOpenProfile} className="flex items-center gap-3 pl-1 pr-2 py-1 hover:bg-zinc-900 rounded-xl transition-all cursor-pointer text-left">
           <div className="w-8 h-8 bg-amber-400 text-zinc-950 rounded-xl flex items-center justify-center font-bold shadow-md">
             <User className="w-4 h-4" />
@@ -56,25 +49,19 @@ function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile 
     </nav>
   );
 }
-
 export default function FleetSyncMatchmaking() {
   const [activeModal, setActiveModal] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [matchOrder, setMatchOrder] = useState(null);
-  const [matchDriver, setMatchDriver] = useState(null);
-
-  // States Reais da API (Iniciam vazios)
+  const [matchDriver, setMatchDriver] = useState(null);
   const [orders, setOrders] = useState([]);
   const [recommendations, setRecommendations] = useState({});
-  const [loading, setLoading] = useState(true);
-
-  // Busca os pedidos pendentes ao carregar a tela
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     carregarPedidosPendentes();
   }, []);
-
   const carregarPedidosPendentes = async () => {
     try {
       setLoading(true);
@@ -82,13 +69,11 @@ export default function FleetSyncMatchmaking() {
       setOrders(response.data || []);
     } catch (error) {
       console.error("Erro ao buscar pedidos:", error);
-      setOrders([]); // Garante que fica vazio em caso de erro
+      setOrders([]); 
     } finally {
       setLoading(false);
     }
-  };
-
-  // Função para chamar o Algoritmo de Inteligência para um pedido específico
+  };
   const buscarRecomendacoes = async (pedidoId) => {
     try {
       const response = await api.get(`/matches/recomendar/${pedidoId}`);
@@ -99,15 +84,10 @@ export default function FleetSyncMatchmaking() {
     } catch (error) {
       console.error("Erro ao buscar recomendações:", error);
     }
-  };
-
-  // Dispara a requisição de Match para o Backend
+  };
   const handleExecuteMatch = async () => {
-    try {
-      // O matchDriver precisa ter um ID de match ou do motorista, dependendo de como o backend estruturar
-      await api.post(`/matches/${matchOrder.id}/responder`, { status: "ACEITO", motoristaId: matchDriver.id });
-
-      // Remove o pedido da tela já que ele não é mais pendente
+    try {
+      await api.post(`/matches/${matchOrder.id}/responder`, { status: "ACEITO", motoristaId: matchDriver.id });
       setOrders(orders.filter(o => o.id !== matchOrder.id));
       setActiveModal(null);
       setMatchOrder(null);
@@ -117,7 +97,6 @@ export default function FleetSyncMatchmaking() {
       alert("Falha ao processar o Match. Verifique a conexão.");
     }
   };
-
   const getPriorityStyle = (priority) => {
     switch (priority) {
       case 'ALTA': return 'bg-rose-50 text-rose-700 border-rose-200';
@@ -125,18 +104,15 @@ export default function FleetSyncMatchmaking() {
       default: return 'bg-zinc-100 text-zinc-600 border-zinc-200';
     }
   };
-
   const handleOpenOrderDetail = (order) => {
     setSelectedOrder(order);
     setActiveModal('order-detail');
   };
-
   const handleTriggerMatchModal = (order, driverRecommendation) => {
     setMatchOrder(order);
     setMatchDriver(driverRecommendation);
     setActiveModal('match-confirmation');
   };
-
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-800 font-sans antialiased flex flex-col pt-16">
       <Menu
@@ -145,7 +121,6 @@ export default function FleetSyncMatchmaking() {
         onOpenNotifications={() => setActiveModal('notifications')}
         onOpenProfile={() => setActiveModal('profile')}
       />
-
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
           <div>
@@ -160,7 +135,6 @@ export default function FleetSyncMatchmaking() {
             </button>
           </div>
         </div>
-
         {/* FEEDBACK DE ESTADO VAZIO (NENHUM DADO) */}
         {!loading && orders.length === 0 && (
           <div className="bg-white border border-dashed border-zinc-300 rounded-2xl p-12 text-center flex flex-col items-center justify-center">
@@ -171,11 +145,9 @@ export default function FleetSyncMatchmaking() {
             <p className="text-sm text-zinc-500 max-w-md">Não há nenhuma entrega pendente aguardando alocação no momento. O sistema exibirá novos cards automaticamente quando um cliente cadastrar um pedido.</p>
           </div>
         )}
-
         <div className="space-y-4">
           {orders.filter(o => !o.motorista && (String(o.id).includes(searchQuery) || (o.cliente && o.cliente.toLowerCase().includes(searchQuery.toLowerCase())))).map((order) => (
             <div key={order.id} className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-
               <div className="lg:col-span-4 space-y-3 border-b lg:border-b-0 lg:border-r border-zinc-200 pb-4 lg:pb-0 lg:pr-6">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-mono font-bold text-amber-500 bg-zinc-950 px-2 py-0.5 rounded-md">#{order.id}</span>
@@ -198,10 +170,8 @@ export default function FleetSyncMatchmaking() {
                   </div>
                 </div>
               </div>
-
               <div className="lg:col-span-8 space-y-3">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block font-mono">Motoristas Recomendados</span>
-
                 <div className="space-y-2">
                   {recommendations[order.id]?.map((rec, index) => (
                     <div key={index} className="border border-zinc-200/80 bg-zinc-50/50 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-zinc-400 transition-all">
@@ -226,7 +196,6 @@ export default function FleetSyncMatchmaking() {
                       </div>
                     </div>
                   ))}
-
                   {/* Vazio ou sem recomendações geradas ainda */}
                   {(!recommendations[order.id] || recommendations[order.id].length === 0) && (
                     <div className="p-4 border border-dashed border-zinc-200 rounded-xl text-center text-xs text-zinc-400 font-medium">
@@ -239,7 +208,6 @@ export default function FleetSyncMatchmaking() {
           ))}
         </div>
       </main>
-
       {/* Modal de Confirmação de Match */}
       {activeModal === 'match-confirmation' && matchOrder && matchDriver && (
         <div className="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">

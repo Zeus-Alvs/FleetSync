@@ -1,5 +1,4 @@
 import React from 'react';
-
 export default function Contact() {
   return (
     <section id="contato" className="py-20 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 text-white">
@@ -21,14 +20,12 @@ export default function Contact() {
           </button>
         </form>
       </div>
-
       {/* Informações Institucionais */}
       <div className="flex flex-col justify-center space-y-8 lg:pl-6">
         <div className="space-y-2">
           <h3 className="text-3xl font-black tracking-tight">Fale Conosco</h3>
           <p className="text-zinc-400 text-sm">Nossa equipe de suporte e implantação está pronta para atender sua transportadora.</p>
         </div>
-
         <div className="space-y-4">
           <div className="flex items-start gap-4">
             <div>

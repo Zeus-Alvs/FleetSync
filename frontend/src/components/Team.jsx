@@ -1,8 +1,6 @@
 import React, { useRef } from 'react';
-
 export default function Team() {
   const scrollRef = useRef(null);
-
   const members = [
     { 
       name: "Brenno D'Luca", 
@@ -35,7 +33,6 @@ export default function Team() {
       image: "/members/zeus.jpeg"
     },
   ];
-
   const scroll = (direction) => {
     if (direction === 'left') {
       scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
@@ -43,7 +40,6 @@ export default function Team() {
       scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
     }
   };
-
   return (
     <section id="equipe" className="py-20 px-6 bg-zinc-950 text-white border-y border-white/5 relative overflow-hidden">
       <div className="max-w-7xl mx-auto">
@@ -63,7 +59,6 @@ export default function Team() {
             </button>
           </div>
         </div>
-
         {/* Carrossel Horizontal */}
         <div 
           ref={scrollRef}
@@ -83,8 +78,7 @@ export default function Team() {
                       src={member.image} 
                       alt={member.name} 
                       className="w-full h-full object-cover"
-                      onError={(e) => { 
-                        // Fallback caso a imagem dê erro ou não seja encontrada
+                      onError={(e) => { 
                         e.target.style.display = 'none';
                         e.target.parentNode.innerHTML = `<span>${member.name.charAt(0)}</span>`;
                       }}
@@ -93,7 +87,6 @@ export default function Team() {
                     <span>{member.name.charAt(0)}</span>
                   )}
                 </div>
-                
                 <h3 className="text-xl font-bold text-white">{member.name}</h3>
                 <p className="text-xs font-mono text-amber-500 uppercase tracking-wider mb-4">{member.role}</p>
                 <p className="text-sm text-zinc-400 leading-relaxed">{member.desc}</p>

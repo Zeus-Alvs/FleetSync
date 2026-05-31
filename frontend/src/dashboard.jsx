@@ -4,7 +4,6 @@ import {
   X, Edit2, Trash2, Navigation, ChevronRight, Search, Bell, User
 } from 'lucide-react';
 import api from './services/api';
-
 function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile }) {
   return (
     <nav className="fixed top-0 left-0 right-0 h-16 bg-zinc-950 border-b border-zinc-800 px-6 flex items-center justify-between z-40 shadow-lg">
@@ -21,7 +20,6 @@ function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile 
           </span>
         </div>
       </div>
-
       <div className="hidden md:flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-1.5 w-96 gap-2 focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-400/30 transition-all">
         <Search className="w-4 h-4 text-zinc-500" />
         <input
@@ -32,7 +30,6 @@ function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile 
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-
       <div className="flex items-center gap-4">
         <button onClick={onOpenNotifications} className="relative p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer">
           <Bell className="w-5 h-5" />
@@ -52,53 +49,41 @@ function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile 
     </nav>
   );
 }
-
 export default function FleetSyncDashboard() {
   const [activeModal, setActiveModal] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // States Reais da API
+  const [searchQuery, setSearchQuery] = useState('');
   const [orders, setOrders] = useState([]);
   const [motoristas, setMotoristas] = useState([]);
   const [analytics, setAnalytics] = useState({
     taxaAceite: 0,
     entregasConcluidas: 0
   });
-  const [loading, setLoading] = useState(true);
-
-  // Carrega tudo ao montar a tela
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     carregarDashboard();
   }, []);
-
   const carregarDashboard = async () => {
     try {
-      setLoading(true);
-      // Dispara 3 requisições simultâneas para o Java
+      setLoading(true);
       const [resPedidos, resMotoristas, resAnalytics] = await Promise.all([
-        api.get('/pedidos'), // Rota que deve retornar todos os pedidos (pendentes ou não)
+        api.get('/pedidos'), 
         api.get('/motoristas'),
         api.get('/analytics/taxa-aceite')
       ]);
-
       setOrders(resPedidos.data || []);
-      setMotoristas(resMotoristas.data || []);
-
-      // Monta os analytics baseados na resposta do Java (ou zeros se vier vazio)
+      setMotoristas(resMotoristas.data || []);
       setAnalytics({
         taxaAceite: resAnalytics.data?.taxa || 0,
         entregasConcluidas: resPedidos.data?.filter(p => p.statusPedido === 'ENTREGUE').length || 0
       });
-
     } catch (error) {
       console.error("Erro ao carregar Dashboard:", error);
     } finally {
       setLoading(false);
     }
   };
-
   const getPriorityStyle = (priority) => {
     switch (priority) {
       case 'ALTA': return 'bg-rose-50 text-rose-700 border-rose-200';
@@ -106,7 +91,6 @@ export default function FleetSyncDashboard() {
       default: return 'bg-zinc-100 text-zinc-600 border-zinc-200';
     }
   };
-
   const getStatusStyle = (status) => {
     switch (status) {
       case 'EM_ROTA': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
@@ -115,50 +99,40 @@ export default function FleetSyncDashboard() {
       default: return 'bg-zinc-50 text-zinc-500';
     }
   };
-
   const handleOpenOrderDetail = (order) => {
     setSelectedOrder(order);
     setActiveModal('order-detail');
   };
-
   const handleOpenDriverDetail = (motorista) => {
     if (!motorista) return;
     setSelectedDriver(motorista);
     setActiveModal('driver-detail');
   };
-
   const handleUpdateStatus = async (newStatus) => {
-    try {
-      // Como o Backend ainda não tem rota de update de status do pedido, apenas atualizamos localmente a tela
+    try {
       setOrders(orders.map(o => o.id === selectedOrder.id ? { ...o, statusPedido: newStatus } : o));
       setActiveModal(null);
     } catch (error) {
       alert("Erro ao atualizar status");
     }
   };
-
   const handleCancelOrder = async () => {
-    try {
-      // Como o Backend não tem rota de delete, atualizamos localmente
+    try {
       setOrders(orders.filter(o => o.id !== selectedOrder.id));
       setActiveModal(null);
     } catch (error) {
       alert("Erro ao excluir pedido");
     }
   };
-
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-800 font-sans antialiased flex flex-col pt-16">
-
       <Menu
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onOpenNotifications={() => setActiveModal('notifications')}
         onOpenProfile={() => setActiveModal('profile')}
       />
-
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
-
         {/* CARDS ANALÍTICOS SUPERIORES */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-5 border border-zinc-200/80 rounded-2xl shadow-sm flex items-center justify-between">
@@ -170,7 +144,6 @@ export default function FleetSyncDashboard() {
               <Clock className="w-6 h-6" />
             </div>
           </div>
-
           <div className="bg-white p-5 border border-zinc-200/80 rounded-2xl shadow-sm flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">Motoristas Base</p>
@@ -180,7 +153,6 @@ export default function FleetSyncDashboard() {
               <Users className="w-6 h-6" />
             </div>
           </div>
-
           <div className="bg-white p-5 border border-zinc-200/80 rounded-2xl shadow-sm flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">Entregas Concluídas</p>
@@ -190,7 +162,6 @@ export default function FleetSyncDashboard() {
               <CheckCircle2 className="w-6 h-6" />
             </div>
           </div>
-
           <div className="bg-white p-5 border border-zinc-200/80 rounded-2xl shadow-sm flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-mono">Taxa de Eficiência</p>
@@ -201,9 +172,7 @@ export default function FleetSyncDashboard() {
             </div>
           </div>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
           <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-2xl p-4 shadow-sm flex flex-col h-[520px]">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -225,13 +194,11 @@ export default function FleetSyncDashboard() {
               )}
             </div>
           </div>
-
           <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm flex flex-col h-[520px]">
             <div className="mb-4">
               <h3 className="font-bold text-zinc-900">Monitoramento de Pedidos</h3>
               <p className="text-xs text-zinc-400">Selecione um item para gerenciar</p>
             </div>
-
             <div className="flex-1 overflow-y-auto space-y-3 pr-1">
               {!loading && orders.length === 0 && (
                 <div className="text-center text-xs text-zinc-400 py-10">Nenhum pedido registrado no sistema.</div>
@@ -255,7 +222,6 @@ export default function FleetSyncDashboard() {
           </div>
         </div>
       </main>
-
       {/* MODAIS (MANTIDOS IDÊNTICOS PARA NÃO QUEBRAR O SEU ESTILO) */}
       {activeModal && (
         <div className="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
@@ -273,7 +239,6 @@ export default function FleetSyncDashboard() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
             <div className="p-5">
               {activeModal === 'notifications' && (
                 <div className="space-y-3">
@@ -286,7 +251,6 @@ export default function FleetSyncDashboard() {
                   </div>
                 </div>
               )}
-
               {activeModal === 'profile' && (
                 <div className="space-y-4 text-center">
                   <div className="w-16 h-16 bg-zinc-950 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold border border-zinc-800 shadow-md">SP</div>
@@ -297,7 +261,6 @@ export default function FleetSyncDashboard() {
                   <button onClick={() => setActiveModal(null)} className="w-full bg-zinc-100 text-zinc-700 py-2.5 rounded-xl text-xs font-bold hover:bg-zinc-200">Voltar ao Hub</button>
                 </div>
               )}
-
               {activeModal === 'order-detail' && selectedOrder && (
                 <div className="space-y-4">
                   <div className="bg-zinc-50 border border-zinc-200 p-3.5 rounded-xl">
@@ -323,7 +286,6 @@ export default function FleetSyncDashboard() {
                   </div>
                 </div>
               )}
-
               {activeModal === 'driver-detail' && selectedDriver && (
                 <div className="space-y-4">
                   <div className="text-center py-2">
@@ -333,7 +295,6 @@ export default function FleetSyncDashboard() {
                   <button onClick={() => setActiveModal('order-detail')} className="w-full bg-zinc-950 text-white py-2.5 rounded-xl text-xs cursor-pointer">Voltar ao Pedido</button>
                 </div>
               )}
-
               {activeModal === 'status' && (
                 <div className="space-y-2">
                   {['PENDENTE', 'EM_ROTA', 'ENTREGUE'].map((statusOption) => (
@@ -343,7 +304,6 @@ export default function FleetSyncDashboard() {
                   ))}
                 </div>
               )}
-
               {activeModal === 'cancel' && (
                 <div className="space-y-4 text-center py-2">
                   <AlertTriangle className="w-10 h-10 text-rose-600 mx-auto" />
@@ -354,12 +314,10 @@ export default function FleetSyncDashboard() {
                   </div>
                 </div>
               )}
-
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -1,40 +1,43 @@
 package com.fatec.fleetsync.service;
-
-import java.util.Optional;
-
-import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.fatec.fleetsync.model.Usuario;
+import com.fatec.fleetsync.model.Motorista;
+import com.fatec.fleetsync.model.enums.PerfilUsuario;
+import com.fatec.fleetsync.dto.CadastroRequestDTO;
 import com.fatec.fleetsync.repository.UsuarioRepository;
-
+import com.fatec.fleetsync.repository.MotoristaRepository;
 @Service
 public class AuthService {
-
     @Autowired
     private UsuarioRepository usuarioRepository;
-
-    public Usuario cadastrarUsuario(Usuario novoUsuario) {
-        Optional<Usuario> existente = usuarioRepository.findByEmail(novoUsuario.getEmail());
-        if (existente.isPresent()) {
-            throw new RuntimeException("E-mail já cadastrado no sistema.");
+    @Autowired
+    private MotoristaRepository motoristaRepository;
+    public Usuario cadastrarUsuario(CadastroRequestDTO dto) {
+        if (usuarioRepository.findByEmail(dto.email()).isPresent()) {
+            throw new RuntimeException("Este e-mail já está em uso.");
+        }
+        Usuario novoUsuario = new Usuario(
+                dto.nome(),
+                dto.email(),
+                dto.senha(), 
+                dto.documento(),
+                dto.telefone(),
+                dto.perfil());
+        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
+        if (dto.perfil() == PerfilUsuario.MOTORISTA) {
+            Motorista perfilMotorista = new Motorista();
+            perfilMotorista.setNome(dto.nome());
+            perfilMotorista.setCnh("PENDENTE-" + dto.documento());
+            perfilMotorista.setDisponivel(false); 
+            perfilMotorista.setAvaliacao(5.0); 
+            perfilMotorista.setLatitudeAtual(-24.0058);
+            perfilMotorista.setLongitudeAtual(-46.4127);
+            motoristaRepository.save(perfilMotorista);
         }
-        
-        String senhaHash = BCrypt.hashpw(novoUsuario.getSenha(), BCrypt.gensalt());
-        novoUsuario.setSenha(senhaHash);
-        
-        return usuarioRepository.save(novoUsuario);
-    }
-
-    public Usuario autenticar(String email, String senha) {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
-
-        if (!BCrypt.checkpw(senha, usuario.getSenha())) {
-            throw new RuntimeException("Senha incorreta.");
-        }
-
-        return usuario;
+        return usuarioSalvo;
+    }
+    public Usuario autenticar(String email, String senha) {
+        return new Usuario();
     }
 }

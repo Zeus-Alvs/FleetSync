@@ -1,5 +1,4 @@
 import React from 'react';
-
 export default function About() {
   return (
     <section id="sobre" className="py-20 px-6 bg-zinc-950 text-white border-y border-white/5">
@@ -13,7 +12,6 @@ export default function About() {
             O FleetSync nasceu com o propósito de revolucionar a coordenação de transporte de cargas, eliminando a ociosidade da frota e reduzindo drasticamente o tempo de espera através de tecnologia de ponta.
           </p>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { title: "Monitoramento", desc: "Rastreamento em tempo real de motoristas e cargas no mapa." },

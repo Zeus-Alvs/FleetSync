@@ -1,59 +1,37 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-// Importando nossos novos utilitários de segurança e API
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import api from '../services/api';
-
 export default function LoginModal({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
-
-  const navigate = useNavigate();
-  // Puxando a função 'login' do nosso cofre global
+  const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-
   if (!isOpen) return null;
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setErro('');
-
     if (!email || !senha) {
       setErro('Por favor, preencha todos os campos.');
       return;
     }
-
     try {
-      setCarregando(true);
-
-      // 1. Usando o Axios para fazer a chamada (já aponta para localhost:8080/api)
-      const response = await api.post('/api/auth/login', { email, senha });
-
-      // 2. Pegamos os dados do usuário que o Java devolveu
-      const usuarioLogado = response.data;
-
-      // 3. Workaround: Como o Java ainda não gera JWT, improvisamos um token 
-      // temporário. Quando o backend for atualizado, basta ele mandar um 'token' no JSON.
-      const token = usuarioLogado.token || 'token-temporario-jwt-em-desenvolvimento';
-
-      // 4. Salva a sessão no Cofre Global (que por sua vez destranca a ProtectedRoute)
+      setCarregando(true);
+      const response = await api.post('/api/auth/login', { email, senha });
+      const usuarioLogado = response.data;
+      const token = usuarioLogado.token || 'token-temporario-jwt-em-desenvolvimento';
       login(token, usuarioLogado);
-
       onClose();
       navigate('/dashboard');
-
-    } catch (err) {
-      // O Axios guarda a mensagem de erro do backend dentro de err.response.data
+    } catch (err) {
       const mensagem = err.response?.data || 'Credenciais inválidas ou servidor offline.';
       setErro(typeof mensagem === 'string' ? mensagem : 'Erro ao tentar autenticar.');
     } finally {
       setCarregando(false);
     }
   };
-
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
       <div className="bg-zinc-950 border border-white/10 rounded-xl p-8 w-full max-w-md relative text-white">
@@ -63,16 +41,13 @@ export default function LoginModal({ isOpen, onClose }) {
         >
           &times;
         </button>
-
         <h3 className="text-2xl font-bold text-white mb-2">Acesse o <span className="text-amber-500">FleetSync</span></h3>
         <p className="text-sm text-zinc-400 mb-6">Insira suas credenciais para acessar o painel operacional.</p>
-
         {erro && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded mb-4">
             {erro}
           </div>
         )}
-
         <form className="space-y-4" onSubmit={handleLogin}>
           <div>
             <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">E-mail</label>
@@ -94,11 +69,9 @@ export default function LoginModal({ isOpen, onClose }) {
               onChange={(e) => setSenha(e.target.value)}
             />
           </div>
-
           <div className="text-right">
             <a href="#recuperar" className="text-xs text-amber-500 hover:underline">Esqueceu a senha?</a>
           </div>
-
           <button
             type="submit"
             disabled={carregando}

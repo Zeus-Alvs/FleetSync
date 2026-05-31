@@ -1,5 +1,4 @@
 import React from 'react';
-
 export default function Features() {
   const list = [
     { title: "Dashboard Operacional", text: "Visão analítica instantânea com gráficos de entregas e desempenho." },
@@ -9,7 +8,6 @@ export default function Features() {
     { title: "Histórico de Entregas", text: "Auditoria detalhada de rotas passadas, canhotos e tempos de entrega." },
     { title: "Sistema de Matches", text: "Algoritmo exclusivo que cruza demandas urgentes com o motorista ideal." },
   ];
-
   return (
     <section id="features" className="py-20 px-6 max-w-7xl mx-auto text-white">
       <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
@@ -19,7 +17,6 @@ export default function Features() {
         <br/>
         <p className="text-zinc-400">Recursos modulares projetados para entregar o controle absoluto da operação logística na ponta dos seus dedos.</p>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {list.map((feat, idx) => (
           <div 
