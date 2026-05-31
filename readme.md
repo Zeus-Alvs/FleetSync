@@ -95,6 +95,7 @@ FleetSync/
 │   └── src/
 │       ├── main/java/com/fatec/fleetsync/
 │       │   ├── config/
+│       │   │   ├── CorsConfig.java
 │       │   │   └── DataLoader.java                # Seeder Geográfico
 │       │   ├── controller/                        # Endpoints da API REST
 │       │   │   ├── AuthController.java
@@ -102,6 +103,8 @@ FleetSync/
 │       │   │   ├── MotoristaController.java
 │       │   │   ├── PedidoController.java
 │       │   │   └── VeiculoController.java
+│       │   ├── dto/                               # Data Transfer Objects (Segurança)
+│       │   │   └── CadastroRequestDTO.java
 │       │   ├── model/                             # Entidades de Domínio (JPA)
 │       │   │   ├── enums/                         # NivelUrgencia, StatusPedido, etc.
 │       │   │   ├── MatchEntrega.java
