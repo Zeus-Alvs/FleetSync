@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from './contexts/AuthContext';
 import {
   Truck, Users, CheckCircle2, BarChart3, MapPin, Clock, AlertTriangle,
-  X, Edit2, Trash2, Navigation, ChevronRight, Search, Bell, User
+  X, Edit2, Trash2, Navigation, ChevronRight, Search, Bell, User, LogOut, Plus
 } from 'lucide-react';
 import api from './services/api';
 function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile }) {
@@ -51,29 +54,44 @@ function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile 
 }
 export default function FleetSyncDashboard() {
   const [activeModal, setActiveModal] = useState(null);
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const [novoPedido, setNovoPedido] = useState({
+    cliente: '',
+    enderecoEntrega: '',
+    pesoCarga: '',
+    nivelUrgencia: 'NORMAL',
+    valorCarga: ''
+  });
+  const [enviandoPedido, setEnviandoPedido] = useState(false);
+
   const [orders, setOrders] = useState([]);
   const [motoristas, setMotoristas] = useState([]);
   const [analytics, setAnalytics] = useState({
     taxaAceite: 0,
     entregasConcluidas: 0
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     carregarDashboard();
   }, []);
   const carregarDashboard = async () => {
     try {
-      setLoading(true);
+      setLoading(true);
+
       const [resPedidos, resMotoristas, resAnalytics] = await Promise.all([
-        api.get('/pedidos'), 
+        api.get('/pedidos'),
         api.get('/motoristas'),
         api.get('/analytics/taxa-aceite')
       ]);
       setOrders(resPedidos.data || []);
-      setMotoristas(resMotoristas.data || []);
+      setMotoristas(resMotoristas.data || []);
+
       setAnalytics({
         taxaAceite: resAnalytics.data?.taxa || 0,
         entregasConcluidas: resPedidos.data?.filter(p => p.statusPedido === 'ENTREGUE').length || 0
@@ -109,7 +127,8 @@ export default function FleetSyncDashboard() {
     setActiveModal('driver-detail');
   };
   const handleUpdateStatus = async (newStatus) => {
-    try {
+    try {
+
       setOrders(orders.map(o => o.id === selectedOrder.id ? { ...o, statusPedido: newStatus } : o));
       setActiveModal(null);
     } catch (error) {
@@ -117,11 +136,34 @@ export default function FleetSyncDashboard() {
     }
   };
   const handleCancelOrder = async () => {
-    try {
+    try {
+
       setOrders(orders.filter(o => o.id !== selectedOrder.id));
       setActiveModal(null);
     } catch (error) {
       alert("Erro ao excluir pedido");
+    }
+  };
+  const handleCriarPedido = async (e) => {
+    e.preventDefault();
+    try {
+      setEnviandoPedido(true);
+      // Dispara o POST real para a sua API Java
+      const response = await api.post('/pedidos', {
+        ...novoPedido,
+        pesoCarga: Number(novoPedido.pesoCarga) || 0,
+        statusPedido: 'PENDENTE' // Nasce aguardando motorista
+      });
+      
+      // Adiciona o novo pedido no topo da lista atual sem precisar recarregar a tela
+      setOrders([response.data, ...orders]);
+      setActiveModal(null);
+      // Limpa o formulário
+      setNovoPedido({ cliente: '', enderecoEntrega: '', pesoCarga: '', nivelUrgencia: 'NORMAL', valorCarga: '' });
+    } catch (error) {
+      alert("Erro ao criar pedido. Verifique se o servidor está rodando.");
+    } finally {
+      setEnviandoPedido(false);
     }
   };
   return (
@@ -195,9 +237,18 @@ export default function FleetSyncDashboard() {
             </div>
           </div>
           <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm flex flex-col h-[520px]">
-            <div className="mb-4">
-              <h3 className="font-bold text-zinc-900">Monitoramento de Pedidos</h3>
-              <p className="text-xs text-zinc-400">Selecione um item para gerenciar</p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-bold text-zinc-900">Monitoramento de Pedidos</h3>
+                <p className="text-xs text-zinc-400">Selecione um item para gerenciar</p>
+              </div>
+              {/* BOTÃO ADICIONADO AQUI */}
+              <button 
+                onClick={() => setActiveModal('novo-pedido')}
+                className="bg-zinc-950 hover:bg-amber-500 text-white hover:text-black transition-colors px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Novo
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto space-y-3 pr-1">
               {!loading && orders.length === 0 && (
@@ -234,6 +285,7 @@ export default function FleetSyncDashboard() {
                 {activeModal === 'cancel' && "Aviso: Cancelamento de Pedido"}
                 {activeModal === 'notifications' && "Central de Alertas e Notificações"}
                 {activeModal === 'profile' && "Perfil do Operador Logístico"}
+                {activeModal === 'novo-pedido' && "Cadastrar Nova Ordem de Serviço"}
               </h4>
               <button onClick={() => setActiveModal(null)} className="p-1 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
@@ -253,12 +305,27 @@ export default function FleetSyncDashboard() {
               )}
               {activeModal === 'profile' && (
                 <div className="space-y-4 text-center">
-                  <div className="w-16 h-16 bg-zinc-950 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold border border-zinc-800 shadow-md">SP</div>
-                  <div>
-                    <h5 className="font-bold text-zinc-900 text-base">Controlador Central</h5>
-                    <p className="text-xs text-amber-500 font-mono font-bold mt-0.5">ID Operador: #40821</p>
+                  <div className="w-16 h-16 bg-zinc-950 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold border border-zinc-800 shadow-md">
+                    {user?.nome ? user.nome.substring(0, 2).toUpperCase() : 'SP'}
                   </div>
-                  <button onClick={() => setActiveModal(null)} className="w-full bg-zinc-100 text-zinc-700 py-2.5 rounded-xl text-xs font-bold hover:bg-zinc-200">Voltar ao Hub</button>
+                  <div>
+                    <h5 className="font-bold text-zinc-900 text-base">{user?.nome || 'Controlador Central'}</h5>
+                    <p className="text-xs text-amber-500 font-mono font-bold mt-0.5">Perfil: {user?.perfil || 'ADMIN'}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <button onClick={() => setActiveModal(null)} className="bg-zinc-100 text-zinc-700 py-2.5 rounded-xl text-xs font-bold hover:bg-zinc-200 cursor-pointer">
+                      Voltar
+                    </button>
+                    <button
+                      onClick={() => {
+                        logout();
+                        navigate('/');
+                      }}
+                      className="bg-rose-50 text-rose-700 py-2.5 rounded-xl text-xs font-bold hover:bg-rose-100 flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" /> Sair do Sistema
+                    </button>
+                  </div>
                 </div>
               )}
               {activeModal === 'order-detail' && selectedOrder && (
@@ -313,6 +380,71 @@ export default function FleetSyncDashboard() {
                     <button onClick={handleCancelOrder} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl text-xs cursor-pointer">Sim, Cancelar</button>
                   </div>
                 </div>
+              )}
+              {activeModal === 'novo-pedido' && (
+                <form onSubmit={handleCriarPedido} className="space-y-4">
+                  <div className="bg-amber-50 border border-amber-200/60 p-3 rounded-xl text-xs text-amber-800 font-medium mb-4">
+                    Preencha os dados da carga. O sistema de Matchmaking buscará motoristas após a criação.
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-zinc-500">Cliente / Empresa Solicitante</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={novoPedido.cliente}
+                      onChange={(e) => setNovoPedido({...novoPedido, cliente: e.target.value})}
+                      placeholder="Ex: Indústrias Alfa S.A." 
+                      className="bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-400" 
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-zinc-500">Endereço de Destino (Entrega)</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={novoPedido.enderecoEntrega}
+                      onChange={(e) => setNovoPedido({...novoPedido, enderecoEntrega: e.target.value})}
+                      placeholder="Ex: Av. Paulista, 1000 - São Paulo, SP" 
+                      className="bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-400" 
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-zinc-500">Peso Estimado (kg)</label>
+                      <input 
+                        type="number" 
+                        required 
+                        value={novoPedido.pesoCarga}
+                        onChange={(e) => setNovoPedido({...novoPedido, pesoCarga: e.target.value})}
+                        placeholder="Ex: 1200" 
+                        className="bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-400" 
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-zinc-500">Prioridade / SLA</label>
+                      <select 
+                        value={novoPedido.nivelUrgencia}
+                        onChange={(e) => setNovoPedido({...novoPedido, nivelUrgencia: e.target.value})}
+                        className="bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-400 cursor-pointer"
+                      >
+                        <option value="BAIXA">Baixa (Flexível)</option>
+                        <option value="NORMAL">Normal (Padrão)</option>
+                        <option value="ALTA">Alta Urgência (Express)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={enviandoPedido}
+                    className="w-full bg-amber-500 text-black font-black py-3 rounded-xl text-xs cursor-pointer hover:bg-amber-400 transition-colors mt-2 disabled:opacity-50"
+                  >
+                    {enviandoPedido ? 'Registrando Pedido...' : 'Salvar e Gerar OS'}
+                  </button>
+                </form>
               )}
             </div>
           </div>

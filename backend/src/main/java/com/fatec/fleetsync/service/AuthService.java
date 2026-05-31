@@ -13,10 +13,12 @@ public class AuthService {
     private UsuarioRepository usuarioRepository;
     @Autowired
     private MotoristaRepository motoristaRepository;
-    public Usuario cadastrarUsuario(CadastroRequestDTO dto) {
+    public Usuario cadastrarUsuario(CadastroRequestDTO dto) {
+
         if (usuarioRepository.findByEmail(dto.email()).isPresent()) {
             throw new RuntimeException("Este e-mail já está em uso.");
-        }
+        }
+
         Usuario novoUsuario = new Usuario(
                 dto.nome(),
                 dto.email(),
@@ -24,20 +26,25 @@ public class AuthService {
                 dto.documento(),
                 dto.telefone(),
                 dto.perfil());
-        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
+        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
+
         if (dto.perfil() == PerfilUsuario.MOTORISTA) {
             Motorista perfilMotorista = new Motorista();
-            perfilMotorista.setNome(dto.nome());
+            perfilMotorista.setNome(dto.nome());
+
             perfilMotorista.setCnh("PENDENTE-" + dto.documento());
             perfilMotorista.setDisponivel(false); 
-            perfilMotorista.setAvaliacao(5.0); 
+            perfilMotorista.setAvaliacao(5.0); 
+
             perfilMotorista.setLatitudeAtual(-24.0058);
             perfilMotorista.setLongitudeAtual(-46.4127);
             motoristaRepository.save(perfilMotorista);
         }
         return usuarioSalvo;
-    }
-    public Usuario autenticar(String email, String senha) {
+    }
+
+    public Usuario autenticar(String email, String senha) {
+
         return new Usuario();
     }
 }
