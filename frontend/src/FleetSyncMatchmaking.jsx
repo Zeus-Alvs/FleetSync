@@ -76,7 +76,7 @@ export default function FleetSyncMatchmaking() {
   const carregarPedidosPendentes = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/pedidos/pendentes');
+      const response = await api.get('/api/pedidos/pendentes');
       setOrders(response.data || []);
       setCurrentOrderIndex(0);
       setRecommendations([]);
@@ -97,7 +97,7 @@ export default function FleetSyncMatchmaking() {
     try {
       setBuscarMatches(true);
       // Busca motoristas recomendados para o pedido atual
-      const response = await api.get(`/matches/recomendar/${activeOrder.id}`);
+      const response = await api.get(`/api/matches/recomendar/${activeOrder.id}`);
       setRecommendations(response.data || []);
       setCurrentRecIndex(0);
     } catch (error) {
@@ -110,7 +110,7 @@ export default function FleetSyncMatchmaking() {
   // RF03: Botão de Aceitar
   const handleAceitar = async () => {
     try {
-      await api.post(`/matches/${activeOrder.id}/responder`, { 
+      await api.post(`/api/matches/${activeRec.matchId}/responder`, { 
         status: "ACEITO", 
         motoristaId: activeRec.motorista?.id || activeRec.id 
       });
@@ -124,7 +124,7 @@ export default function FleetSyncMatchmaking() {
   // RF03: Botão de Recusar (Banir/Descartar Motorista)
   const handleRecusar = async () => {
     try {
-      await api.post(`/matches/${activeOrder.id}/responder`, { 
+      await api.post(`/api/matches/${activeRec.matchId}/responder`, { 
         status: "RECUSADO", 
         motoristaId: activeRec.motorista?.id || activeRec.id 
       });

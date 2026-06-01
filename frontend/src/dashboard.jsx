@@ -7,6 +7,26 @@ import {
   X, Edit2, Trash2, Navigation, ChevronRight, Search, Bell, User, LogOut, Plus
 } from 'lucide-react';
 import api from './services/api';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+
+const motoristaIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const pedidoIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile }) {
   return (
     <nav className="fixed top-0 left-0 right-0 h-16 bg-zinc-950 border-b border-zinc-800 px-6 flex items-center justify-between z-40 shadow-lg">
@@ -60,14 +80,14 @@ export default function FleetSyncDashboard() {
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [novoPedido, setNovoPedido] = useState({
-    cliente: '',
-    enderecoEntrega: '',
-    pesoCarga: '',
-    nivelUrgencia: 'NORMAL',
-    valorCarga: ''
-  });
+  const [novoPedido, setNovoPedido] = useState({ cliente: '', enderecoEntrega: '', cidade: 'SANTOS', pesoCarga: '', nivelUrgencia: 'MEDIO', valorCarga: '' });
   const [enviandoPedido, setEnviandoPedido] = useState(false);
+
+  // States do Autocomplete
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedCoords, setSelectedCoords] = useState(null);
 
   const [orders, setOrders] = useState([]);
   const [motoristas, setMotoristas] = useState([]);
@@ -80,14 +100,49 @@ export default function FleetSyncDashboard() {
   useEffect(() => {
     carregarDashboard();
   }, []);
+
+  // Hook do Autocomplete
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (novoPedido.enderecoEntrega.length > 4 && showSuggestions && !selectedCoords) {
+        setIsSearchingAddress(true);
+        try {
+          const cityNameMap = { 'SANTOS': 'Santos', 'SAO_VICENTE': 'São Vicente', 'PRAIA_GRANDE': 'Praia Grande', 'CUBATAO': 'Cubatão' };
+          const friendlyCity = cityNameMap[novoPedido.cidade] || 'Santos';
+          const geoResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(novoPedido.enderecoEntrega + ", " + friendlyCity + ", SP, Brasil")}&limit=4`);
+          const geoData = await geoResponse.json();
+          setAddressSuggestions(geoData || []);
+        } catch (error) {
+          console.error("Erro na busca de endereço:", error);
+        } finally {
+          setIsSearchingAddress(false);
+        }
+      } else {
+        setAddressSuggestions([]);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [novoPedido.enderecoEntrega, novoPedido.cidade, showSuggestions, selectedCoords]);
+
+  const handleSelectSuggestion = (sug) => {
+    // Pega as primeiras partes do endereço retornado
+    const displayNameParts = sug.display_name.split(',');
+    const displayName = displayNameParts.length >= 2 ? `${displayNameParts[0].trim()}, ${displayNameParts[1].trim()}` : sug.display_name;
+    
+    setNovoPedido({ ...novoPedido, enderecoEntrega: displayName });
+    setSelectedCoords({ lat: parseFloat(sug.lat), lon: parseFloat(sug.lon) });
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+  };
   const carregarDashboard = async () => {
     try {
       setLoading(true);
 
       const [resPedidos, resMotoristas, resAnalytics] = await Promise.all([
-        api.get('/pedidos'),
-        api.get('/motoristas'),
-        api.get('/analytics/taxa-aceite')
+        api.get('/api/pedidos'),
+        api.get('/api/motoristas'),
+        api.get('/api/analytics/taxa-aceite')
       ]);
       setOrders(resPedidos.data || []);
       setMotoristas(resMotoristas.data || []);
@@ -128,40 +183,69 @@ export default function FleetSyncDashboard() {
   };
   const handleUpdateStatus = async (newStatus) => {
     try {
-
+      await api.patch(`/api/pedidos/${selectedOrder.id}/status`, { statusPedido: newStatus });
       setOrders(orders.map(o => o.id === selectedOrder.id ? { ...o, statusPedido: newStatus } : o));
       setActiveModal(null);
     } catch (error) {
-      alert("Erro ao atualizar status");
+      alert("Erro ao atualizar status na API.");
     }
   };
   const handleCancelOrder = async () => {
     try {
-
+      await api.delete(`/api/pedidos/${selectedOrder.id}`);
       setOrders(orders.filter(o => o.id !== selectedOrder.id));
       setActiveModal(null);
     } catch (error) {
-      alert("Erro ao excluir pedido");
+      alert("Erro ao excluir pedido na API.");
     }
   };
   const handleCriarPedido = async (e) => {
     e.preventDefault();
+    
+    let finalLat, finalLon;
+
+    // Se o usuário selecionou uma sugestão, usa a coordenada exata
+    if (selectedCoords) {
+      finalLat = selectedCoords.lat;
+      finalLon = selectedCoords.lon;
+    } else {
+      // Se a API for fraca e não achar a rua, usamos a cidade como base (Fallback)
+      const cityCoords = {
+        'SANTOS': { lat: -23.9618, lon: -46.3322 },
+        'SAO_VICENTE': { lat: -23.9650, lon: -46.3800 },
+        'PRAIA_GRANDE': { lat: -24.0058, lon: -46.4127 },
+        'CUBATAO': { lat: -23.8950, lon: -46.4233 }
+      };
+      const defaultCoord = cityCoords[novoPedido.cidade] || cityCoords['SANTOS'];
+      finalLat = defaultCoord.lat + (Math.random() * 0.005); 
+      finalLon = defaultCoord.lon + (Math.random() * 0.005);
+    }
+
     try {
       setEnviandoPedido(true);
-      // Dispara o POST real para a sua API Java
-      const response = await api.post('/pedidos', {
+
+      // Dispara o POST real para a sua API Java, já com a coordenada cravada
+      const response = await api.post('/api/pedidos', {
         ...novoPedido,
         pesoCarga: Number(novoPedido.pesoCarga) || 0,
-        statusPedido: 'PENDENTE' // Nasce aguardando motorista
+        statusPedido: 'PENDENTE', // Nasce aguardando motorista
+        cidade: novoPedido.cidade,
+        latitudeDestino: finalLat,
+        longitudeDestino: finalLon
       });
       
       // Adiciona o novo pedido no topo da lista atual sem precisar recarregar a tela
       setOrders([response.data, ...orders]);
       setActiveModal(null);
       // Limpa o formulário
-      setNovoPedido({ cliente: '', enderecoEntrega: '', pesoCarga: '', nivelUrgencia: 'NORMAL', valorCarga: '' });
+      setNovoPedido({ cliente: '', enderecoEntrega: '', cidade: 'SANTOS', pesoCarga: '', nivelUrgencia: 'MEDIO', valorCarga: '' });
+      setSelectedCoords(null);
     } catch (error) {
-      alert("Erro ao criar pedido. Verifique se o servidor está rodando.");
+      if (error.response && error.response.status === 400) {
+        alert("O Backend rejeitou o pedido! Motivo provável: O endereço que você digitou fica num raio menor que 5km do Hub Logístico (Regra de Negócio Java).");
+      } else {
+        alert("Erro ao criar pedido. Verifique se o servidor está rodando.");
+      }
     } finally {
       setEnviandoPedido(false);
     }
@@ -224,16 +308,41 @@ export default function FleetSyncDashboard() {
                 <p className="text-xs text-zinc-400">Visualização activa de rotas principais no Estado de São Paulo</p>
               </div>
             </div>
-            <div className="flex-1 rounded-xl bg-zinc-100 border border-zinc-200/60 relative overflow-hidden bg-[radial-gradient(#e4e4e7_1px,transparent_1px)] [background-size:16px_16px]">
-              <svg className="absolute inset-0 w-full h-full opacity-40">
-                <path d="M 150 120 Q 280 180 380 250 T 520 380" fill="transparent" stroke="#f59e0b" strokeWidth="3" strokeDasharray="6" />
-              </svg>
-              {orders.length > 0 && (
-                <div className="absolute top-1/4 left-1/4 group cursor-pointer" onClick={() => handleOpenOrderDetail(orders[0])}>
-                  <div className="w-3 h-3 bg-amber-500 rounded-full animate-ping absolute"></div>
-                  <div className="w-3 h-3 bg-amber-500 rounded-full border-2 border-white relative"></div>
-                </div>
-              )}
+            <div className="flex-1 rounded-xl bg-zinc-100 border border-zinc-200/60 relative overflow-hidden z-0">
+              <MapContainer center={[-23.9618, -46.3322]} zoom={11} className="w-full h-full z-0">
+                <TileLayer
+                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                
+                {motoristas.map(m => (
+                  <Marker 
+                    key={`motorista-${m.id}`} 
+                    position={[m.latitudeAtual, m.longitudeAtual]} 
+                    icon={motoristaIcon}
+                  >
+                    <Popup>
+                      <b>{m.nome}</b><br/>
+                      CNH: {m.cnh}<br/>
+                      {m.disponivel ? "🟢 Disponível" : "🔴 Em rota"}
+                    </Popup>
+                  </Marker>
+                ))}
+
+                {orders.filter(o => o.statusPedido !== 'ENTREGUE').map(o => (
+                  <Marker 
+                    key={`pedido-${o.id}`} 
+                    position={[o.latitudeDestino, o.longitudeDestino]} 
+                    icon={pedidoIcon}
+                  >
+                    <Popup>
+                      <b>Pedido #{o.id}</b><br/>
+                      Cliente: {o.cliente}<br/>
+                      Status: {o.statusPedido}
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
             </div>
           </div>
           <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm flex flex-col h-[520px]">
@@ -399,16 +508,51 @@ export default function FleetSyncDashboard() {
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-bold text-zinc-500">Endereço de Destino (Entrega)</label>
+                  <div className="flex flex-col gap-1.5 relative">
+                    <label className="text-xs font-bold text-zinc-500">Endereço de Destino (Busca Inteligente)</label>
                     <input 
                       type="text" 
                       required 
                       value={novoPedido.enderecoEntrega}
-                      onChange={(e) => setNovoPedido({...novoPedido, enderecoEntrega: e.target.value})}
-                      placeholder="Ex: Av. Paulista, 1000 - São Paulo, SP" 
+                      onChange={(e) => {
+                        setNovoPedido({...novoPedido, enderecoEntrega: e.target.value});
+                        setShowSuggestions(true);
+                        setSelectedCoords(null);
+                      }}
+                      placeholder="Ex: Av. Paulista, 1000" 
                       className="bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-400" 
                     />
+                    {isSearchingAddress && (
+                      <div className="absolute right-3 top-8 text-xs text-amber-500 font-bold">...</div>
+                    )}
+                    {showSuggestions && addressSuggestions.length > 0 && (
+                      <div className="absolute top-[65px] left-0 right-0 bg-white border border-zinc-200 rounded-xl shadow-xl z-[9999] max-h-48 overflow-y-auto">
+                        {addressSuggestions.map((sug, i) => (
+                          <div 
+                            key={i} 
+                            onClick={() => handleSelectSuggestion(sug)}
+                            className="px-3 py-2.5 text-xs hover:bg-amber-50 cursor-pointer border-b border-zinc-100 last:border-0 flex items-start gap-2 transition-colors"
+                          >
+                            <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                            <span className="text-zinc-700 font-medium">{sug.display_name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-zinc-500">Cidade (Para precisão do Mapa)</label>
+                    <select 
+                      value={novoPedido.cidade}
+                      onChange={(e) => setNovoPedido({...novoPedido, cidade: e.target.value})}
+                      className="bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-400 cursor-pointer"
+                    >
+                      <option value="SANTOS">Santos</option>
+                      <option value="SAO_VICENTE">São Vicente</option>
+                      <option value="PRAIA_GRANDE">Praia Grande</option>
+                      <option value="CUBATAO">Cubatão</option>
+                    </select>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -430,9 +574,9 @@ export default function FleetSyncDashboard() {
                         onChange={(e) => setNovoPedido({...novoPedido, nivelUrgencia: e.target.value})}
                         className="bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-400 cursor-pointer"
                       >
-                        <option value="BAIXA">Baixa (Flexível)</option>
-                        <option value="NORMAL">Normal (Padrão)</option>
-                        <option value="ALTA">Alta Urgência (Express)</option>
+                        <option value="BAIXO">Baixo (Flexível)</option>
+                        <option value="MEDIO">Médio (Padrão)</option>
+                        <option value="ALTO">Alto Urgência (Express)</option>
                       </select>
                     </div>
                   </div>

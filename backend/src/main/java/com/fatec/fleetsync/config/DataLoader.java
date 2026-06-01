@@ -1,78 +1,86 @@
 package com.fatec.fleetsync.config;
+
 import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner; 
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+
 import com.fatec.fleetsync.model.Motorista;
+import com.fatec.fleetsync.model.Pedido;
 import com.fatec.fleetsync.model.Veiculo;
+import com.fatec.fleetsync.model.enums.CidadeBaixada;
+import com.fatec.fleetsync.model.enums.NivelUrgencia;
 import com.fatec.fleetsync.model.enums.TipoVeiculo;
 import com.fatec.fleetsync.repository.MotoristaRepository;
+import com.fatec.fleetsync.repository.PedidoRepository;
 import com.fatec.fleetsync.repository.VeiculoRepository;
+
 @Component
 public class DataLoader implements CommandLineRunner {
-    @Autowired
-    private VeiculoRepository veiculoRepository;
-    @Autowired
-    private MotoristaRepository motoristaRepository;
+
+    @Autowired private VeiculoRepository   veiculoRepository;
+    @Autowired private MotoristaRepository motoristaRepository;
+    @Autowired private PedidoRepository    pedidoRepository;
+
     @Override
     public void run(String... args) throws Exception {
+
         if (veiculoRepository.count() == 0 && motoristaRepository.count() == 0) {
             System.out.println("====== INICIANDO SIMULAÇÃO GEOGRÁFICA (BAIXADA SANTISTA) ======");
-            Veiculo v1 = new Veiculo();
-            v1.setPlaca("ABC1234");
-            v1.setTipoVeiculo(TipoVeiculo.MOTO);
-            v1.setCapacidadeCarga(25.0); 
-            v1.setEmUso(false);
-            Veiculo v2 = new Veiculo();
-            v2.setPlaca("FI02026");
-            v2.setTipoVeiculo(TipoVeiculo.FIORINO);
-            v2.setCapacidadeCarga(650.0); 
-            v2.setEmUso(false);
-            Veiculo v3 = new Veiculo();
-            v3.setPlaca("VAN5555");
-            v3.setTipoVeiculo(TipoVeiculo.VAN);
-            v3.setCapacidadeCarga(1200.0); 
-            v3.setEmUso(false);
-            Veiculo v4 = new Veiculo();
-            v4.setPlaca("CAM7777");
-            v4.setTipoVeiculo(TipoVeiculo.CAMINHAO);
-            v4.setCapacidadeCarga(8000.0); 
-            v4.setEmUso(false);
+
+            Veiculo v1 = new Veiculo("ABC1234", 25.0,   TipoVeiculo.MOTO);
+            Veiculo v2 = new Veiculo("FIO2026", 650.0,  TipoVeiculo.FIORINO);
+            Veiculo v3 = new Veiculo("VAN5555", 1200.0, TipoVeiculo.VAN);
+            Veiculo v4 = new Veiculo("CAM7777", 8000.0, TipoVeiculo.CAMINHAO);
             veiculoRepository.saveAll(Arrays.asList(v1, v2, v3, v4));
-            Motorista m1 = new Motorista();
-            m1.setNome("Carlos Santos Express");
-            m1.setCnh("11111111111");
-            m1.setDisponivel(true);
-            m1.setAvaliacao(4.8);
-            m1.setLatitudeAtual(-23.9608);
-            m1.setLongitudeAtual(-46.3339);
-            m1.setVeiculo(v1); 
-            Motorista m2 = new Motorista();
-            m2.setNome("Marcos Silva Log");
-            m2.setCnh("22222222222");
-            m2.setDisponivel(true);
-            m2.setAvaliacao(4.5);
-            m2.setLatitudeAtual(-23.9631);
-            m2.setLongitudeAtual(-46.3919);
-            m2.setVeiculo(v2); 
-            Motorista m3 = new Motorista();
-            m3.setNome("Rogério PG Entregas");
-            m3.setCnh("33333333333");
-            m3.setDisponivel(true);
-            m3.setAvaliacao(4.9);
-            m3.setLatitudeAtual(-24.0058);
-            m3.setLongitudeAtual(-46.4127);
-            m3.setVeiculo(v3);
-            Motorista m4 = new Motorista();
-            m4.setNome("Antônio Pesados Cubatão");
-            m4.setCnh("44444444444");
-            m4.setDisponivel(true);
-            m4.setAvaliacao(4.2);
-            m4.setLatitudeAtual(-23.8950);
-            m4.setLongitudeAtual(-46.4250);
-            m4.setVeiculo(v4);
+
+            Motorista m1 = buildMotorista("Carlos Santos Express",  "11111111111", 4.8, -23.9608, -46.3339, v1);
+            Motorista m2 = buildMotorista("Marcos Silva Log",        "22222222222", 4.5, -23.9631, -46.3919, v2);
+            Motorista m3 = buildMotorista("Rogério PG Entregas",     "33333333333", 4.9, -24.0058, -46.4127, v3);
+            Motorista m4 = buildMotorista("Antônio Pesados Cubatão", "44444444444", 4.2, -23.8950, -46.4250, v4);
             motoristaRepository.saveAll(Arrays.asList(m1, m2, m3, m4));
-            System.out.println("====== BANCO DE DADOS POPULADO COM SUCESSO ======");
+
+            System.out.println("====== MOTORISTAS E VEÍCULOS POPULADOS ======");
         }
+
+        if (pedidoRepository.count() == 0) {
+            Pedido p1 = buildPedido("Supermercado Pão de Açúcar",
+                "Av. Ana Costa, 123 - Santos", CidadeBaixada.SANTOS,
+                20.0, -23.9618, -46.3322, NivelUrgencia.ALTO);
+
+            Pedido p2 = buildPedido("Farmácia Drogasil",
+                "Av. Presidente Kennedy, 500 - Praia Grande", CidadeBaixada.PRAIA_GRANDE,
+                8.0, -24.0050, -46.4020, NivelUrgencia.CRITICO);
+
+            Pedido p3 = buildPedido("Indústria Química Cubatão",
+                "Rua Industrial, 80 - Cubatão", CidadeBaixada.CUBATAO,
+                4500.0, -23.8940, -46.4200, NivelUrgencia.MEDIO);
+
+            Pedido p4 = buildPedido("Construtora São Vicente",
+                "Rua Frei Gaspar, 200 - São Vicente", CidadeBaixada.SAO_VICENTE,
+                600.0, -23.9640, -46.3900, NivelUrgencia.BAIXO);
+
+            pedidoRepository.saveAll(Arrays.asList(p1, p2, p3, p4));
+            System.out.println("====== PEDIDOS DE EXEMPLO POPULADOS ======");
+        }
+    }
+
+    private Motorista buildMotorista(String nome, String cnh, double aval,
+                                     double lat, double lon, Veiculo veiculo) {
+        Motorista m = new Motorista();
+        m.setNome(nome); m.setCnh(cnh); m.setDisponivel(true);
+        m.setAvaliacao(aval); m.setLatitudeAtual(lat); m.setLongitudeAtual(lon);
+        m.setVeiculo(veiculo);
+        return m;
+    }
+
+    private Pedido buildPedido(String cliente, String endereco, CidadeBaixada cidade,
+                                double peso, double lat, double lon, NivelUrgencia urgencia) {
+        Pedido p = new Pedido();
+        p.setCliente(cliente); p.setEnderecoEntrega(endereco); p.setCidade(cidade);
+        p.setPesoCarga(peso);  p.setLatitudeDestino(lat);      p.setLongitudeDestino(lon);
+        p.setNivelUrgencia(urgencia);
+        return p;
     }
 }

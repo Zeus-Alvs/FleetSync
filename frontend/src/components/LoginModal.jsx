@@ -18,14 +18,13 @@ export default function LoginModal({ isOpen, onClose }) {
       return;
     }
     try {
-      setCarregando(true);
-      const response = await api.post('/api/auth/login', { email, senha });
-      const usuarioLogado = response.data;
-      const token = usuarioLogado.token || 'token-temporario-jwt-em-desenvolvimento';
-      login(token, usuarioLogado);
+      setCarregando(true);
+      const response = await api.post('/api/auth/login', { email, senha });
+      const { usuario, token } = response.data;
+      login(token, usuario);
       onClose();
       navigate('/dashboard');
-    } catch (err) {
+    } catch (err) {
       const mensagem = err.response?.data || 'Credenciais inválidas ou servidor offline.';
       setErro(typeof mensagem === 'string' ? mensagem : 'Erro ao tentar autenticar.');
     } finally {

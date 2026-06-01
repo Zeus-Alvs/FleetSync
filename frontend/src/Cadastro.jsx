@@ -34,7 +34,7 @@ export default function Register() {
         senha: password,
         documento: documento,
         telefone: telefone,
-        perfil: userType === 'driver' ? "MOTORISTA" : "CLIENTE"
+        perfil: userType === 'driver' ? "MOTORISTA" : "EMPRESA"
       };
 
       await api.post('/api/auth/cadastro', payload);
