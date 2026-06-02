@@ -13,7 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
+
 import jakarta.persistence.Table;
 
 @Entity
@@ -24,17 +24,15 @@ public class MatchEntrega {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;
 
-    @ManyToOne
-    @JoinColumn(name = "motorista_id", nullable = false)
-    private Motorista motorista;
+
 
     @ManyToOne
-    @JoinColumn(name = "veiculo_id", nullable = false)
-    private Veiculo veiculo;
+    @JoinColumn(name = "transportadora_id", nullable = false)
+    private Transportadora transportadora;
 
     @Column(nullable = false)
     private Integer scoreCompatibilidade;
@@ -54,11 +52,10 @@ public class MatchEntrega {
     public Pedido getPedido() { return pedido; }
     public void setPedido(Pedido pedido) { this.pedido = pedido; }
 
-    public Motorista getMotorista() { return motorista; }
-    public void setMotorista(Motorista motorista) { this.motorista = motorista; }
 
-    public Veiculo getVeiculo() { return veiculo; }
-    public void setVeiculo(Veiculo veiculo) { this.veiculo = veiculo; }
+
+    public Transportadora getTransportadora() { return transportadora; }
+    public void setTransportadora(Transportadora transportadora) { this.transportadora = transportadora; }
 
     public Integer getScoreCompatibilidade() { return scoreCompatibilidade; }
     public void setScoreCompatibilidade(Integer scoreCompatibilidade) { this.scoreCompatibilidade = scoreCompatibilidade; }

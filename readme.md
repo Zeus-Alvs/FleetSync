@@ -98,27 +98,31 @@ FleetSync/
 │       │   │   ├── CorsConfig.java
 │       │   │   └── DataLoader.java                # Seeder Geográfico
 │       │   ├── controller/                        # Endpoints da API REST
+│       │   │   ├── AnalyticsController.java
 │       │   │   ├── AuthController.java
 │       │   │   ├── MatchController.java
-│       │   │   ├── MotoristaController.java
 │       │   │   ├── PedidoController.java
-│       │   │   └── VeiculoController.java
+│       │   │   ├── SolicitacaoController.java
+│       │   │   ├── TransportadoraController.java
+│       │   │   └── UsuarioController.java
 │       │   ├── dto/                               # Data Transfer Objects (Segurança)
 │       │   │   └── CadastroRequestDTO.java
+│       │   ├── exception/                         # Tratamento Global de Exceções
 │       │   ├── model/                             # Entidades de Domínio (JPA)
 │       │   │   ├── enums/                         # NivelUrgencia, StatusPedido, etc.
 │       │   │   ├── MatchEntrega.java
-│       │   │   ├── Motorista.java
 │       │   │   ├── Pedido.java
-│       │   │   ├── Usuario.java
-│       │   │   └── Veiculo.java
+│       │   │   ├── Solicitacao.java
+│       │   │   ├── Transportadora.java
+│       │   │   └── Usuario.java
 │       │   ├── repository/                        # Interfaces do Spring Data JPA
 │       │   ├── service/                           # Lógicas de Negócio e Algoritmo
+│       │   │   ├── AutenticacaoService.java
 │       │   │   ├── AuthService.java
 │       │   │   ├── MatchService.java              # Lógica core (Haversine/Score)
-│       │   │   ├── MotoristaService.java
 │       │   │   ├── PedidoService.java
-│       │   │   └── VeiculoService.java
+│       │   │   ├── TokenService.java
+│       │   │   └── TransportadoraService.java
 │       │   └── ProjetoApplication.java
 │       └── main/resources/
 │           └── application.properties             # Credenciais do Banco
@@ -131,12 +135,16 @@ FleetSync/
         ├── assets/            # Imagens SVG e estáticos
         ├── components/        # Componentes Reutilizáveis e Modais
         │   ├── About.jsx, Contact.jsx, Features.jsx
-        │   ├── Footer.jsx, Hero.jsx, LoginModal.jsx
+        │   ├── Footer.jsx, Hero.jsx, ProtectedRoute.jsx
         │   ├── Navbar.jsx, Team.jsx
-        ├── Cadastro.jsx           # Painel de Formulário de Registro
+        ├── contexts/          # Contextos React Globais (AuthContext)
+        ├── services/          # Serviços de Comunicação com Backend (api.js)
+        ├── Cadastro.jsx           # Página de Formulário de Registro
+        ├── Login.jsx              # Página de Login
+        ├── administracao.jsx      # Painel Admin (Aprovação e Moderação)
         ├── dashboard.jsx          # Painel Analítico e Operacional
         ├── FleetSyncMatchmaking.jsx # Interface Rica Estilo "Tinder Logístico"
-        ├── App.jsx                # Router e roteador base da aplicação
+        ├── App.jsx                # Router base da aplicação
         ├── main.jsx               # Ponto de Injeção de renderização da DOM
         └── index.css              # Estilos utilitários globais do TailwindCSS
 ```

@@ -25,16 +25,19 @@ public class Usuario implements UserDetails {
     private String documento;
     @Column(nullable = false)
     private String telefone;
+    @Column(nullable = true)
+    private String enderecoSede;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PerfilUsuario perfil = PerfilUsuario.OPERADOR;
+    private PerfilUsuario perfil = PerfilUsuario.EMPRESA;
     public Usuario() {}
-    public Usuario(String nome, String email, String senha, String documento, String telefone, PerfilUsuario perfil) {
+    public Usuario(String nome, String email, String senha, String documento, String telefone, String enderecoSede, PerfilUsuario perfil) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.documento = documento;
         this.telefone = telefone;
+        this.enderecoSede = enderecoSede;
         this.perfil = perfil;
     }
 
@@ -50,6 +53,8 @@ public class Usuario implements UserDetails {
     public void setDocumento(String documento) { this.documento = documento; }
     public String getTelefone() { return telefone; }
     public void setTelefone(String telefone) { this.telefone = telefone; }
+    public String getEnderecoSede() { return enderecoSede; }
+    public void setEnderecoSede(String enderecoSede) { this.enderecoSede = enderecoSede; }
     public PerfilUsuario getPerfil() { return perfil; }
     public void setPerfil(PerfilUsuario perfil) { this.perfil = perfil; }
 

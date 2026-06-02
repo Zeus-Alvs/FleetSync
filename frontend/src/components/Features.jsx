@@ -2,11 +2,11 @@ import React from 'react';
 export default function Features() {
   const list = [
     { title: "Dashboard Operacional", text: "Visão analítica instantânea com gráficos de entregas e desempenho." },
-    { title: "Controle de Motoristas", text: "Gerenciamento completo do perfil, turnos e categorias de CNH." },
+    { title: "Controle B2B", text: "Gerenciamento completo das transportadoras parceiras aprovadas no seu ecossistema." },
     { title: "Gerenciamento de Pedidos", text: "Triagem e monitoramento do status de pacotes, do envio à entrega." },
     { title: "Mapa Logístico", text: "Plotagem dinâmica das rotas ativas com atualizações em tempo real." },
     { title: "Histórico de Entregas", text: "Auditoria detalhada de rotas passadas, canhotos e tempos de entrega." },
-    { title: "Sistema de Matches", text: "Algoritmo exclusivo que cruza demandas urgentes com o motorista ideal." },
+    { title: "Sistema de Matches", text: "Algoritmo exclusivo que cruza demandas urgentes com a transportadora ideal." },
   ];
   return (
     <section id="features" className="py-20 px-6 max-w-7xl mx-auto text-white">

@@ -7,21 +7,23 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.fatec.fleetsync.model.MatchEntrega;
-import com.fatec.fleetsync.model.Motorista;
+import com.fatec.fleetsync.model.Transportadora;
 import com.fatec.fleetsync.model.Pedido;
 import com.fatec.fleetsync.model.enums.StatusMatch;
 
 @Repository
 public interface MatchEntregaRepository extends JpaRepository<MatchEntrega, Long> {
 
-    boolean existsByPedidoAndMotoristaAndStatusMatch(Pedido pedido, Motorista motorista, StatusMatch statusMatch);
+    boolean existsByPedidoAndTransportadoraAndStatusMatch(Pedido pedido, Transportadora transportadora, StatusMatch statusMatch);
+
+    void deleteByPedido(Pedido pedido);
 
     long countByStatusMatch(StatusMatch statusMatch);
 
-    @Query("SELECT m.motorista.nome, COUNT(m.id) AS total " +
+    @Query("SELECT m.transportadora.nomeEmpresa, COUNT(m.id) AS total " +
            "FROM MatchEntrega m " +
            "WHERE m.statusMatch = com.fatec.fleetsync.model.enums.StatusMatch.CONCLUIDO " +
-           "GROUP BY m.motorista.nome " +
+           "GROUP BY m.transportadora.nomeEmpresa " +
            "ORDER BY total DESC")
     List<Object[]> rankingProdutividade();
 

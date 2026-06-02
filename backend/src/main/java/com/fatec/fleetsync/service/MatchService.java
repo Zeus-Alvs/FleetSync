@@ -11,22 +11,21 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fatec.fleetsync.dto.MatchResponseDTO;
 import com.fatec.fleetsync.exception.ResourceNotFoundException;
 import com.fatec.fleetsync.model.MatchEntrega;
-import com.fatec.fleetsync.model.Motorista;
+import com.fatec.fleetsync.model.Transportadora;
 import com.fatec.fleetsync.model.Pedido;
 import com.fatec.fleetsync.model.enums.NivelUrgencia;
 import com.fatec.fleetsync.model.enums.StatusMatch;
 import com.fatec.fleetsync.model.enums.StatusPedido;
 import com.fatec.fleetsync.repository.MatchEntregaRepository;
-import com.fatec.fleetsync.repository.MotoristaRepository;
+import com.fatec.fleetsync.repository.TransportadoraRepository;
 import com.fatec.fleetsync.repository.PedidoRepository;
-import com.fatec.fleetsync.repository.VeiculoRepository;
+import com.fatec.fleetsync.repository.TransportadoraRepository;
 
 @Service
 public class MatchService {
 
     @Autowired private PedidoRepository       pedidoRepository;
-    @Autowired private MotoristaRepository    motoristaRepository;
-    @Autowired private VeiculoRepository      veiculoRepository;
+    @Autowired private TransportadoraRepository transportadoraRepository;
     @Autowired private MatchEntregaRepository matchEntregaRepository;
 
     private double calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
@@ -60,13 +59,13 @@ public class MatchService {
         }
     }
 
-    private int calcularScore(Pedido pedido, Motorista motorista) {
+    private int calcularScore(Pedido pedido, Transportadora transportadora) {
         double dist   = calcularDistancia(
-            motorista.getLatitudeAtual(),  motorista.getLongitudeAtual(),
-            pedido.getLatitudeDestino(),   pedido.getLongitudeDestino());
+            transportadora.getLatitude(),  transportadora.getLongitude(),
+            pedido.getLatitudeColeta(),    pedido.getLongitudeColeta());
         double sDist  = scoreDistancia(dist) * 0.40;
         double sCarga = scoreCarga(pedido.getPesoCarga(),
-                        motorista.getVeiculo().getCapacidadeCarga()) * 0.40;
+                        transportadora.getCapacidade()) * 0.40;
         double sUrg   = (bonusUrgencia(pedido.getNivelUrgencia()) / 30.0) * 20.0;
         return (int) Math.round(Math.min(100, sDist + sCarga + sUrg));
     }
@@ -78,19 +77,15 @@ public class MatchService {
 
         List<MatchEntrega> sugestoes = new ArrayList<>();
 
-        for (Motorista m : motoristaRepository.findAll()) {
-            if (Boolean.FALSE.equals(m.getDisponivel()))                     continue;
-            if (m.getVeiculo() == null)                                      continue;
-            if (Boolean.TRUE.equals(m.getVeiculo().getEmUso()))              continue;
-            if (m.getVeiculo().getCapacidadeCarga() < pedido.getPesoCarga()) continue;
-            if (matchEntregaRepository.existsByPedidoAndMotoristaAndStatusMatch(
-                    pedido, m, StatusMatch.RECUSADO))                        continue;
+        for (Transportadora t : transportadoraRepository.findAll()) {
+            if (t.getCapacidade() < pedido.getPesoCarga()) continue;
+            if (matchEntregaRepository.existsByPedidoAndTransportadoraAndStatusMatch(
+                    pedido, t, StatusMatch.RECUSADO))                        continue;
 
             MatchEntrega match = new MatchEntrega();
             match.setPedido(pedido);
-            match.setMotorista(m);
-            match.setVeiculo(m.getVeiculo());
-            match.setScoreCompatibilidade(calcularScore(pedido, m));
+            match.setTransportadora(t);
+            match.setScoreCompatibilidade(calcularScore(pedido, t));
             match.setStatusMatch(StatusMatch.SUGERIDO);
             sugestoes.add(matchEntregaRepository.save(match));
         }
@@ -100,8 +95,8 @@ public class MatchService {
         List<MatchResponseDTO> resultado = new ArrayList<>();
         for (MatchEntrega me : sugestoes) {
             double dist = calcularDistancia(
-                me.getMotorista().getLatitudeAtual(), me.getMotorista().getLongitudeAtual(),
-                pedido.getLatitudeDestino(), pedido.getLongitudeDestino());
+                me.getTransportadora().getLatitude(), me.getTransportadora().getLongitude(),
+                pedido.getLatitudeColeta(), pedido.getLongitudeColeta());
             resultado.add(MatchResponseDTO.from(me, Math.round(dist * 10.0) / 10.0));
         }
         return resultado;
@@ -116,11 +111,11 @@ public class MatchService {
 
         if (novoStatus == StatusMatch.ACEITO) {
             match.setStatusMatch(StatusMatch.ACEITO);
-            match.getPedido().setStatusPedido(StatusPedido.EM_ANDAMENTO);
-            match.getMotorista().setDisponivel(false);
-            match.getVeiculo().setEmUso(true);
-            motoristaRepository.save(match.getMotorista());
-            veiculoRepository.save(match.getVeiculo());
+            match.getPedido().setStatusPedido(StatusPedido.EM_ROTA_COLETA);
+            
+            // ADICIONE ESTA LINHA: Carimba a filial escolhida dentro do pedido
+            match.getPedido().setTransportadora(match.getTransportadora()); 
+            
             pedidoRepository.save(match.getPedido());
         } else if (novoStatus == StatusMatch.RECUSADO) {
             match.setStatusMatch(StatusMatch.RECUSADO);
@@ -158,11 +153,7 @@ public class MatchService {
         }
 
         match.setStatusMatch(StatusMatch.CONCLUIDO);
-        match.getPedido().setStatusPedido(StatusPedido.CONCLUIDO);
-        match.getMotorista().setDisponivel(true);
-        match.getVeiculo().setEmUso(false);
-        motoristaRepository.save(match.getMotorista());
-        veiculoRepository.save(match.getVeiculo());
+        match.getPedido().setStatusPedido(StatusPedido.ENTREGUE);
         pedidoRepository.save(match.getPedido());
 
         return matchEntregaRepository.save(match);

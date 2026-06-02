@@ -7,37 +7,63 @@ import {
 } from 'lucide-react';
 import api from './services/api';
 
-function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile }) {
+function Menu({ searchQuery, setSearchQuery, onOpenNotifications, onOpenProfile, activeTab }) {
+  const navigate = useNavigate(); // Habilita a navegação dentro do Menu
+
   return (
     <nav className="fixed top-0 left-0 right-0 h-16 bg-zinc-950 border-b border-zinc-800 px-6 flex items-center justify-between z-40 shadow-lg">
-      <div className="flex items-center gap-3">
-        <div className="bg-amber-400 text-zinc-950 p-2 rounded-xl flex items-center justify-center shadow-md shadow-amber-400/10">
-          <Truck className="w-5 h-5 fill-zinc-950 stroke-zinc-950 stroke-[1.5]" />
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-amber-400 text-zinc-950 p-2 rounded-xl flex items-center justify-center shadow-md shadow-amber-400/10">
+            <Truck className="w-5 h-5 fill-zinc-950 stroke-zinc-950 stroke-[1.5]" />
+          </div>
+          <div>
+            <span className="text-xl font-black tracking-tight text-white">
+              Fleet<span className="text-amber-400">Sync</span>
+            </span>
+            <span className="text-[9px] block font-mono text-zinc-500 tracking-widest -mt-1 font-bold">
+              LOGISTICS HUB
+            </span>
+          </div>
         </div>
-        <div>
-          <span className="text-xl font-black tracking-tight text-white">
-            Fleet<span className="text-amber-400">Sync</span>
-          </span>
-          <span className="text-[9px] block font-mono text-zinc-500 tracking-widest -mt-1 font-bold">
-            LOGISTICS HUB
-          </span>
+
+        {/* LINKS DE NAVEGAÇÃO ADICIONADOS AQUI */}
+        <div className="hidden sm:flex items-center gap-2 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'dashboard'
+                ? 'bg-amber-400 text-zinc-950 shadow-md'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            Torre de Controle
+          </button>
+          <button
+            onClick={() => navigate('/matchmaking')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'matchmaking'
+                ? 'bg-amber-400 text-zinc-950 shadow-md'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            Deck de Match
+          </button>
         </div>
       </div>
-      <div className="hidden md:flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-1.5 w-96 gap-2 focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-400/30 transition-all">
+
+      <div className="hidden md:flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-1.5 w-80 gap-2 focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-400/30 transition-all">
         <Search className="w-4 h-4 text-zinc-500" />
         <input
           type="text"
-          placeholder="Buscar pedidos, rotas ou motoristas..."
+          placeholder="Buscar pedidos, rotas ou filiais..."
           className="bg-transparent text-sm w-full focus:outline-none placeholder-zinc-600 text-zinc-200"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
+
       <div className="flex items-center gap-4">
-        <button onClick={onOpenNotifications} className="relative p-2 hover:bg-zinc-900 rounded-xl text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-400 rounded-full ring-2 ring-zinc-950"></span>
-        </button>
         <div className="h-6 w-[1px] bg-zinc-800"></div>
         <button onClick={onOpenProfile} className="flex items-center gap-3 pl-1 pr-2 py-1 hover:bg-zinc-900 rounded-xl transition-all cursor-pointer text-left">
           <div className="w-8 h-8 bg-amber-400 text-zinc-950 rounded-xl flex items-center justify-center font-bold shadow-md">
@@ -111,34 +137,46 @@ export default function FleetSyncMatchmaking() {
   const handleAceitar = async () => {
     try {
       await api.post(`/api/matches/${activeRec.matchId}/responder`, { 
-        status: "ACEITO", 
-        motoristaId: activeRec.motorista?.id || activeRec.id 
+        matchId: activeRec.id,
+        status: 'ACEITO' 
       });
-      // Remove o pedido atual da fila e avança
-      avancarPedido();
+      
+      // Redireciona para o Dashboard passando os dados para auto-iniciar simulação
+      navigate('/dashboard', { 
+        state: { 
+          autoSimular: true,
+          pedido: activeOrder,
+          transportadora: activeRec.transportadora
+        } 
+      });
     } catch (error) {
-      alert("Falha ao processar o Match (Aceite).");
+      alert("Falha ao processar a alocação.");
     }
   };
 
-  // RF03: Botão de Recusar (Banir/Descartar Motorista)
+  // RF03: Botão de Recusar (Banir/Descartar Transportadora)
   const handleRecusar = async () => {
     try {
       await api.post(`/api/matches/${activeRec.matchId}/responder`, { 
         status: "RECUSADO", 
-        motoristaId: activeRec.motorista?.id || activeRec.id 
+        transportadoraId: activeRec.transportadora?.id || activeRec.id 
       });
       
-      // Avança para o próximo motorista da lista
+      // Avança para a próxima transportadora da lista
       if (currentRecIndex + 1 < recommendations.length) {
         setCurrentRecIndex(prev => prev + 1);
       } else {
-        // Se acabaram os motoristas para este pedido, pula para o próximo pedido
-        avancarPedido();
+        // Se acabaram as opções, pula para o próximo pedido
+        handleNextPedido();
       }
     } catch (error) {
-      alert("Falha ao recusar o motorista na API.");
+      console.error("Erro ao recusar transportadora:", error);
+      alert("Falha ao recusar transportadora na API.");
     }
+  };
+
+  const handleNextPedido = () => {
+    avancarPedido();
   };
 
   const avancarPedido = () => {
@@ -150,6 +188,9 @@ export default function FleetSyncMatchmaking() {
       setCurrentOrderIndex(0);
       setRecommendations([]);
       setCurrentRecIndex(0);
+    } else {
+      // Quando acabar os pedidos, volta para a Torre de Controle (Dashboard)
+      navigate('/dashboard');
     }
   };
 
@@ -160,6 +201,7 @@ export default function FleetSyncMatchmaking() {
         setSearchQuery={setSearchQuery}
         onOpenNotifications={() => setActiveModal('notifications')}
         onOpenProfile={() => setActiveModal('profile')}
+        activeTab="matchmaking"
       />
 
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full flex flex-col">
@@ -201,7 +243,7 @@ export default function FleetSyncMatchmaking() {
             </div>
             <div className="p-8 text-center flex flex-col items-center justify-center flex-1 bg-zinc-50">
               <p className="text-sm text-zinc-600 font-medium mb-6">
-                Este pedido requer um motorista para uma carga de <strong className="text-zinc-900">{activeOrder.pesoCarga}kg</strong>.
+                Este despacho requer alocação de frota para uma carga de <strong className="text-zinc-900">{activeOrder.pesoCarga}kg</strong>.
               </p>
               <button 
                 onClick={processarMatchmaking}
@@ -244,8 +286,8 @@ export default function FleetSyncMatchmaking() {
                 <div className="absolute bottom-0 right-0 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full"></div>
               </div>
 
-              <h2 className="text-2xl font-black text-zinc-900 tracking-tight">{activeRec.motorista?.nome || 'Nome do Operador'}</h2>
-              <p className="text-sm font-bold text-zinc-500 mt-1">{activeRec.veiculo?.tipoVeiculo || 'Veículo'} • Cap: {activeRec.veiculo?.capacidadeCarga || '1000'}kg</p>
+              <h2 className="text-2xl font-black text-zinc-900 tracking-tight">{activeRec.transportadora?.nomeEmpresa || 'Transportadora Parceira'}</h2>
+              <p className="text-sm font-bold text-zinc-500 mt-1">Capacidade Suportada: {activeRec.transportadora?.capacidade || 'N/A'}kg</p>
               
               {/* O GAP 2.3: Exibição da Distância em KM */}
               <div className="mt-6 w-full bg-white rounded-2xl p-4 border border-zinc-200 flex justify-between items-center shadow-sm">

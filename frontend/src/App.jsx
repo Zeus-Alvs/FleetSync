@@ -10,12 +10,12 @@ import Features from './components/Features';
 import Team from './components/Team';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
-import LoginModal from './components/LoginModal';
 import Cadastro from './Cadastro';
-import Dashboard from './Dashboard';
+import Login from './Login';
+import Dashboard from './dashboard';
 import FleetSyncMatchmaking from './FleetSyncMatchmaking';
+import Administracao from './administracao';
 export default function App() {
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -26,7 +26,7 @@ export default function App() {
             path="/"
             element={
               <div className="bg-grafite text-white font-sans antialiased selection:bg-amareloLog selection:text-black">
-                <Navbar onLoginClick={() => setIsLoginOpen(true)} />
+                <Navbar />
                 <main>
                   <Hero />
                   <About />
@@ -35,24 +35,12 @@ export default function App() {
                   <Contact />
                 </main>
                 <Footer />
-                <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
               </div>
             }
           />
-          {/* 2. ROTA DE CADASTRO */}
-          <Route
-            path="/cadastro"
-            element={
-              <div className="bg-grafite text-white font-sans antialiased selection:bg-amareloLog selection:text-black">
-                <Navbar onLoginClick={() => setIsLoginOpen(true)} />
-                <main>
-                  <Cadastro />
-                </main>
-                <Footer />
-                <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
-              </div>
-            }
-          />
+          {/* 2. ROTAS DE AUTENTICAÇÃO LIMPAS (Split Screen) */}
+          <Route path="/cadastro" element={<Cadastro />} />
+          <Route path="/login" element={<Login />} />
           {/* === ROTAS PROTEGIDAS === */}
           {/* O ProtectedRoute atua como um "escudo" para as rotas filhas */}
           <Route element={<ProtectedRoute />}>
@@ -60,6 +48,8 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             {/* 4. ROTA DO MATCHMAKING (TINDER LOGÍSTICO) */}
             <Route path="/matchmaking" element={<FleetSyncMatchmaking />} />
+            {/* 5. ROTA DE ADMINISTRAÇÃO */}
+            <Route path="/administracao" element={<Administracao />} />
           </Route>
           {/* Rota de segurança padrão */}
           <Route path="*" element={<Navigate to="/" replace />} />

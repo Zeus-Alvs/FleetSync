@@ -6,5 +6,6 @@ public record CadastroRequestDTO(
     String senha, 
     String documento, 
     String telefone, 
+    String enderecoSede,
     PerfilUsuario perfil
 ) {}

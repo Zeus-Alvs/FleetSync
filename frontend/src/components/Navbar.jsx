@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-export default function Navbar({ onLoginClick }) {
+export default function Navbar() {
   const [activeSection, setActiveSection] = useState('inicio');
   const location = useLocation();
   const isHomePage = location.pathname === '/';
@@ -55,12 +55,12 @@ export default function Navbar({ onLoginClick }) {
       </div>
       {/* Botões de Ação */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={onLoginClick}
+        <Link
+          to="/login"
           className="text-sm font-semibold hover:text-amber-500 transition-colors"
         >
           Entrar
-        </button>
+        </Link>
         {/* BOTÃO CADASTRAR ARRUMADO COM LINK ROUTER */}
         <Link
           to="/cadastro"

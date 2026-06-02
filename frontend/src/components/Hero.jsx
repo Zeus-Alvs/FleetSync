@@ -9,11 +9,11 @@ export default function Hero() {
           </span>
         </div>
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white mt-2">
-          A rota certa entre a <span className="text-amber-500">carga</span> e o <span className="text-amber-500">motorista</span>
+          A rota certa entre a <span className="text-amber-500">carga</span> e a <span className="text-amber-500">transportadora</span>
         </h1>
         <br/>
         <p className="text-zinc-400 text-base md:text-lg max-w-xl leading-relaxed">
-          O FleetSync conecta pedidos, motoristas e operações em tempo real, otimizando entregas e gerando inteligência para frotas de ponta a ponta.
+          O FleetSync conecta pedidos, transportadoras e operações em tempo real, otimizando entregas e gerando inteligência para frotas de ponta a ponta.
         </p>
         <br/>
         <div className="flex flex-wrap gap-4 pt-4">
