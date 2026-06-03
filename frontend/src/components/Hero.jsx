@@ -1,5 +1,23 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
+
 export default function Hero() {
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const handlePlayVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleVideoEnded = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
   return (
     <section id="inicio" className="pt-36 pb-24 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-white">
       <div className="space-y-8">
@@ -17,7 +35,7 @@ export default function Hero() {
         </p>
         <br/>
         <div className="flex flex-wrap gap-4 pt-4">
-          <button className="bg-amber-500 text-black font-bold px-6 py-3 rounded shadow-md hover:bg-amber-400 transition-all transform hover:-translate-y-0.5">
+          <button onClick={handlePlayVideo} className="bg-amber-500 text-black font-bold px-6 py-3 rounded shadow-md hover:bg-amber-400 transition-all transform hover:-translate-y-0.5">
             Solicitar Demonstração
           </button>
           <button className="bg-transparent border border-white/20 text-white font-bold px-6 py-3 rounded hover:bg-white/5 transition-all">
@@ -25,11 +43,20 @@ export default function Hero() {
           </button>
         </div>
       </div>
-      <div className="bg-zinc-950 border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden aspect-video flex justify-center items-center group">
-        <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 to-transparent opacity-50 group-hover:opacity-70 transition-opacity" />
-        <div className="text-center z-10 space-y-2">
-          <p className="text-xs text-amber-500 uppercase font-mono tracking-widest">[ Interface do Sistema ]</p>
-          <p className="text-zinc-400 text-sm">Dashboard operacional, mapas e telemetria em tempo real.</p>
+      <div className="bg-zinc-950 border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden aspect-video flex justify-center items-center group bg-black">
+        <video 
+          ref={videoRef}
+          src="/fleetsyncdemo.mp4#t=0.001" 
+          preload="metadata"
+          onEnded={handleVideoEnded}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${isPlaying ? 'opacity-100' : 'opacity-40 saturate-50'}`}
+        />
+
+        <div className={`absolute inset-0 bg-gradient-to-tr from-amber-500/10 to-transparent transition-opacity duration-500 pointer-events-none ${isPlaying ? 'opacity-0' : 'opacity-50 group-hover:opacity-80'}`} />
+
+        <div className={`text-center z-10 space-y-2 transition-opacity duration-500 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <p className="text-xs text-amber-500 uppercase font-mono tracking-widest drop-shadow-lg font-bold">[ Interface do Sistema ]</p>
+          <p className="text-zinc-200 text-sm drop-shadow-lg font-medium">Dashboard operacional, mapas e telemetria em tempo real.</p>
         </div>
       </div>
     </section>
